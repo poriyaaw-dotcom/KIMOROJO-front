@@ -2,22 +2,54 @@
 
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
+import { useEffect, useState } from 'react';
 
-// MOCK_DATA_START: Replace this array with collections fetched from the backend API
-const collections = [
-  { name: "Bridal", image: "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=600&q=80" },
-  { name: "Everyday", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=600&q=80" },
-  { name: "Vintage", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=600&q=80" },
-  { name: "Minimalist", image: "https://images.unsplash.com/photo-1602751584552-8ba73aad10e1?auto=format&fit=crop&w=600&q=80" },
-  { name: "Gemstone", image: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=600&q=80" },
-  { name: "Men's", image: "https://images.unsplash.com/photo-1611652022419-a9419f74343d?auto=format&fit=crop&w=600&q=80" },
-  { name: "Luxury", image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80" },
-  { name: "Gifts", image: "https://images.unsplash.com/photo-1549439602-43ebca2327af?auto=format&fit=crop&w=600&q=80" },
-];
-// MOCK_DATA_END
+interface Collection {
+  id: number;
+  name_en: string;
+  name_fa: string;
+  slug: string;
+  image?: string;
+}
 
 export default function CollectionsGrid() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const isFarsi = lang === 'fa';
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("🚀 CollectionsGrid useEffect STARTED");
+    fetch('http://127.0.0.1:8000/api/collections')
+      .then((res) => {
+        console.log("📡 Fetch response received, status:", res.status);
+        return res.json();
+      })
+      .then((data) => {
+        console.log("✅ Data parsed:", data);
+        setCollections(data.data || []);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error("❌ Fetch FAILED:", err);
+        setLoading(false);
+      });
+  }, []);
+
+  console.log("🔄 CollectionsGrid rendering, loading state is:", loading);
+
+  if (loading) {
+    return (
+      <section className="max-w-7xl mx-auto px-6 py-20">
+        <h2 className="text-3xl md:text-4xl font-serif text-center mb-12 text-gray-900 uppercase tracking-widest">
+          {t('collections')}
+        </h2>
+        <div className="text-center text-gray-500">
+          {isFarsi ? 'در حال بارگذاری...' : 'Loading collections...'}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-20">
@@ -26,24 +58,33 @@ export default function CollectionsGrid() {
       </h2>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        {collections.map((collection, index) => (
-          <Link 
-            href={`/collections/${collection.name.toLowerCase()}`} 
-            key={index}
-            className="group relative aspect-square overflow-hidden rounded-sm cursor-pointer"
-          >
-            <img 
-              src={collection.image} 
-              alt={collection.name} 
-              className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-110"
-            />
-            <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-3 text-center transition-all duration-300 group-hover:bg-black/80">
-              <span className="text-white font-serif text-sm md:text-base tracking-widest uppercase">
-                {collection.name}
-              </span>
-            </div>
-          </Link>
-        ))}
+        {collections.map((collection, index) => {
+          const name = isFarsi ? collection.name_fa : collection.name_en;
+          
+          // FIX: Prepend the full storage URL to the image path
+          const image = collection.image 
+            ? `http://127.0.0.1:8000/storage/${collection.image}`
+            : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=600&q=80";
+
+          return (
+            <Link 
+              href={`/collections/${collection.slug}`} 
+              key={collection.id}
+              className="group relative aspect-square overflow-hidden rounded-sm cursor-pointer"
+            >
+              <img 
+                src={image} 
+                alt={name} 
+                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-110"
+              />
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-3 text-center transition-all duration-300 group-hover:bg-black/80">
+                <span className="text-white font-serif text-sm md:text-base tracking-widest uppercase">
+                  {name}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

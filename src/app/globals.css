@@ -22,3 +22,24 @@ html[lang="fa"] body {
     -ms-overflow-style: none;  /* IE and Edge */
     scrollbar-width: none;  /* Firefox */
 }
+/* Elegant Custom Scrollbar for Sliders */
+.elegant-scrollbar::-webkit-scrollbar {
+  height: 4px;
+}
+.elegant-scrollbar::-webkit-scrollbar-track {
+  background: #f3f4f6; /* light gray track */
+  border-radius: 9999px;
+  margin: 0 1rem;
+}
+.elegant-scrollbar::-webkit-scrollbar-thumb {
+  background: #d1d5db; /* elegant grey thumb */
+  border-radius: 9999px;
+}
+.elegant-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af; /* slightly darker on hover */
+}
+/* Firefox Support */
+.elegant-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db #f3f4f6;
+}

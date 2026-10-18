@@ -3,51 +3,117 @@
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-// MOCK_DATA_START: Replace with cart state from backend/context
-const mockCartItems = [
-  {
-    id: 1,
-    nameEn: "Classic Gold Band",
-    nameFa: "انگشتر طلای کلاسیک",
-    image: "https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=200&q=80",
-    price: 272.50,
-    quantity: 1,
-    size: "8",
-  },
-  {
-    id: 2,
-    nameEn: "Silver Twist Ring",
-    nameFa: "انگشتر نقره‌ای پیچ‌دار",
-    image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=200&q=80",
-    price: 120.00,
-    quantity: 2,
-    size: "7",
-  },
-];
-// MOCK_DATA_END
+// Dynamic pricing constant (Placeholder until live API is added at the end of the project)
+const GOLD_PRICE_PER_GRAM_TOMAN = 4500000; // Example: 4,500,000 Toman per gram
+
+interface CartItem {
+  id: number;
+  name_en: string;
+  name_fa: string;
+  weight: number;
+  purity: string;
+  making_charges: number;
+  images: string[] | null;
+  quantity: number;
+}
 
 export default function CartPage() {
   const { t, lang } = useLang();
   const isFarsi = lang === 'fa';
-  const [cartItems, setCartItems] = useState(mockCartItems);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Load cart from localStorage and fetch real product details from Laravel
+  useEffect(() => {
+    const loadCart = async () => {
+      setLoading(true);
+      try {
+        // 1. Get cart IDs and quantities from localStorage
+        // Expected format: [{ id: 1, quantity: 1 }]
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        
+        if (localCart.length === 0) {
+          setCartItems([]);
+          setLoading(false);
+          return;
+        }
+
+        // 2. Fetch all products from backend
+        const res = await fetch('http://127.0.0.1:8000/api/products');
+        const data = await res.json();
+        const allProducts = data.data || [];
+
+        // 3. Merge local cart quantities with backend product data
+        const mergedCart: CartItem[] = localCart.map((localItem: any) => {
+          const product = allProducts.find((p: any) => p.id === localItem.id);
+          if (product) {
+            return {
+              ...product,
+              quantity: localItem.quantity,
+            };
+          }
+          return null;
+        }).filter(Boolean) as CartItem[];
+
+        setCartItems(mergedCart);
+      } catch (error) {
+        console.error("Failed to load cart:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCart();
+  }, []);
 
   const updateQuantity = (id: number, newQuantity: number) => {
     if (newQuantity < 1) return;
+    
+    // Update local state
     setCartItems(items =>
       items.map(item => item.id === id ? { ...item, quantity: newQuantity } : item)
     );
+
+    // Update localStorage
+    const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const updatedLocalCart = localCart.map((item: any) => 
+      item.id === id ? { ...item, quantity: newQuantity } : item
+    );
+    localStorage.setItem('cart', JSON.stringify(updatedLocalCart));
   };
 
   const removeItem = (id: number) => {
+    // Update local state
     setCartItems(items => items.filter(item => item.id !== id));
+
+    // Update localStorage
+    const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+    const updatedLocalCart = localCart.filter((item: any) => item.id !== id);
+    localStorage.setItem('cart', JSON.stringify(updatedLocalCart));
   };
 
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const shipping = subtotal > 500 ? 0 : 25;
-  const tax = subtotal * 0.08;
-  const total = subtotal + shipping + tax;
+  // Calculate price for a single item: (Gold Price * Weight) + Making Charges
+  const getItemPrice = (item: CartItem) => {
+    return (GOLD_PRICE_PER_GRAM_TOMAN * item.weight) + item.making_charges;
+  };
+
+  const subtotal = cartItems.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
+  const shipping = subtotal > 5000000 ? 0 : 150000; // Free shipping over 5,000,000 Toman
+  const total = subtotal + shipping;
+
+  const formatToman = (amount: number) => {
+    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 text-center" dir={isFarsi ? 'rtl' : 'ltr'}>
+        <p className="text-gray-500">{isFarsi ? 'در حال بارگذاری سبد خرید...' : 'Loading cart...'}</p>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0) {
     return (
@@ -55,7 +121,7 @@ export default function CartPage() {
         <ShoppingBag className="w-16 h-16 mx-auto text-gray-300 mb-6" />
         <h1 className="text-2xl font-serif text-gray-900 mb-4">{t('emptyCart')}</h1>
         <Link 
-          href="/shop/rings" 
+          href="/shop" 
           className="inline-block bg-black text-white px-8 py-3 text-sm font-medium tracking-widest uppercase hover:bg-gray-800 transition-colors"
         >
           {t('continueShopping')}
@@ -76,17 +142,20 @@ export default function CartPage() {
         {/* Cart Items */}
         <div className="lg:col-span-2 space-y-6">
           {cartItems.map((item) => {
-            const itemName = isFarsi ? item.nameFa : item.nameEn;
+            const itemName = isFarsi ? item.name_fa : item.name_en;
+            const itemPrice = getItemPrice(item);
+            const itemImage = item.images && item.images.length > 0 ? item.images[0] : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=200&q=80';
+
             return (
               <div 
                 key={item.id} 
                 className="flex gap-6 border-b border-gray-100 pb-6"
               >
-                {/* Image */}
+                {/* Image - Grayscale to color on hover (Project Rule) */}
                 <Link href={`/product/${item.id}`} className="flex-shrink-0">
-                  <div className="w-24 h-24 bg-gray-100 rounded-sm overflow-hidden">
+                  <div className="w-24 h-24 bg-gray-100 rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-500">
                     <img 
-                      src={item.image} 
+                      src={itemImage} 
                       alt={itemName} 
                       className="w-full h-full object-cover"
                     />
@@ -101,7 +170,7 @@ export default function CartPage() {
                         {itemName}
                       </Link>
                       <p className="text-sm text-gray-500 mt-1">
-                        {t('size')}: {item.size}
+                        {item.purity} | {item.weight}g
                       </p>
                     </div>
                     <button 
@@ -133,7 +202,7 @@ export default function CartPage() {
                       </button>
                     </div>
                     <p className="font-medium text-gray-900">
-                      ${(item.price * item.quantity).toFixed(2)}
+                      {formatToman(itemPrice * item.quantity)}
                     </p>
                   </div>
                 </div>
@@ -152,28 +221,24 @@ export default function CartPage() {
             <div className="space-y-4 text-sm">
               <div className="flex justify-between text-gray-600">
                 <span>{t('subtotal')}</span>
-                <span>${subtotal.toFixed(2)}</span>
+                <span>{formatToman(subtotal)}</span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>{t('shipping')}</span>
-                <span>{shipping === 0 ? t('free') : `$${shipping.toFixed(2)}`}</span>
-              </div>
-              <div className="flex justify-between text-gray-600">
-                <span>{t('tax')}</span>
-                <span>${tax.toFixed(2)}</span>
+                <span>{shipping === 0 ? t('free') : formatToman(shipping)}</span>
               </div>
               <div className="border-t border-gray-200 pt-4 mt-4 flex justify-between items-center">
                 <span className="font-medium text-gray-900 text-base">{t('total')}</span>
-                <span className="font-serif text-xl text-black">${total.toFixed(2)}</span>
+                <span className="font-serif text-xl text-black">{formatToman(total)}</span>
               </div>
             </div>
 
-            <button className="w-full bg-black text-white font-medium tracking-widest uppercase py-4 mt-8 rounded-sm hover:bg-gray-800 transition-colors">
+            <Link href="/checkout" className="block w-full bg-black text-white font-medium tracking-widest uppercase py-4 mt-8 rounded-sm hover:bg-gray-800 transition-colors text-center">
               {t('checkout')}
-            </button>
+            </Link>
 
             <p className="text-xs text-gray-400 text-center mt-4">
-              {isFarsi ? 'مالیات و هزینه ارسال در مرحله پرداخت محاسبه می‌شود.' : 'Tax and shipping calculated at checkout.'}
+              {isFarsi ? 'هزینه ارسال در مرحله پرداخت نهایی محاسبه می‌شود.' : 'Shipping calculated at checkout.'}
             </p>
           </div>
         </div>

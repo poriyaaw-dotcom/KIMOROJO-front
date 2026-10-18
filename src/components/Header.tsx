@@ -1,32 +1,100 @@
 "use client";
 
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
 
+interface Category {
+  id: number;
+  name_en: string;
+  name_fa: string;
+  slug: string;
+}
+
+interface Collection {
+  id: number;
+  name_en: string;
+  name_fa: string;
+  slug: string;
+}
+
 export default function Header() {
   const { lang, setLang, t } = useLang();
+  const router = useRouter();
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [collections, setCollections] = useState<Collection[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
   const isFarsi = lang === 'fa';
+  
+  const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  const handleMouseEnter = () => {
+    if (hoverTimeout.current) {
+      clearTimeout(hoverTimeout.current);
+    }
+    setIsShopOpen(true);
+  };
+
+  const handleMouseLeave = () => {
+    hoverTimeout.current = setTimeout(() => {
+      setIsShopOpen(false);
+    }, 200);
+  };
+
+  // Fetch categories and collections for the dynamic mega menu
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [catRes, colRes] = await Promise.all([
+          fetch('http://127.0.0.1:8000/api/categories'),
+          fetch('http://127.0.0.1:8000/api/collections')
+        ]);
+        const catData = await catRes.json();
+        const colData = await colRes.json();
+        setCategories(catData.data || []);
+        setCollections(colData.data || []);
+      } catch (error) {
+        console.error("Failed to fetch menu data", error);
+      }
+    };
+    fetchData();
+  }, []);
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 py-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 items-center gap-4">
+      {/* LOCKED HEIGHT: h-20 (80px). The header will NEVER grow past this. */}
+      <div className="max-w-7xl mx-auto px-6 h-20 relative">
+        
+        {/* Grid for Left and Right items only (Logo is removed from flow) */}
+        <div className="grid grid-cols-2 h-full items-center">
           
           {/* LEFT: Search & Language */}
           <div className="flex items-center justify-start gap-4">
             <div className="relative w-48 hidden md:block">
-              <Search className={`absolute top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 ${isFarsi ? 'right-3' : 'left-3'}`} />
-              <input 
-                type="text" 
-                dir={isFarsi ? 'rtl' : 'ltr'}
-                placeholder={t('searchPlaceholder')} 
-                className={`w-full py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all ${
-                  isFarsi ? 'pr-9 pl-4 text-right' : 'pl-9 pr-4 text-left'
-                }`}
-              />
+              <form 
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  if (searchQuery.trim()) {
+                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+                  }
+                }}
+                className="relative"
+              >
+                <Search className={`absolute top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 ${isFarsi ? 'right-3' : 'left-3'}`} />
+                <input 
+                  type="text" 
+                  dir={isFarsi ? 'rtl' : 'ltr'}
+                  placeholder={t('searchPlaceholder')} 
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={`w-full py-2 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-1 focus:ring-black transition-all ${
+                    isFarsi ? 'pr-9 pl-4 text-right' : 'pl-9 pr-4 text-left'
+                  }`}
+                />
+              </form>
             </div>
             <Search className="md:hidden text-gray-700 w-5 h-5" />
 
@@ -47,26 +115,18 @@ export default function Header() {
             </div>
           </div>
 
-          {/* CENTER: Logo */}
-          <div className="flex justify-center">
-            <Link href="/" className="text-xl md:text-2xl font-serif tracking-[0.25em] text-black uppercase hover:opacity-80 transition-opacity">
-              KIMOROJO
-            </Link>
-          </div>
-
           {/* RIGHT: Nav & Icons */}
           <div className="flex items-center justify-end gap-6">
             <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600">
-              
-              {/* SHOP - Full Width Mega Menu Trigger */}
               <div 
                 className="relative"
-                onMouseEnter={() => setIsShopOpen(true)}
-                onMouseLeave={() => setIsShopOpen(false)}
+                onMouseEnter={handleMouseEnter}
+                onMouseLeave={handleMouseLeave}
               >
-                <button className={`hover:text-black transition-colors py-2 ${isShopOpen ? 'text-black underline underline-offset-8 decoration-1' : ''}`}>
+                {/* Shop button now links to /shop */}
+                <Link href="/shop" className={`hover:text-black transition-colors py-2 ${isShopOpen ? 'text-black underline underline-offset-8 decoration-1' : ''}`}>
                   {t('shop')}
-                </button>
+                </Link>
               </div>
 
               <Link href="/contact" className="hover:text-black transition-colors">{t('contact')}</Link>
@@ -85,38 +145,68 @@ export default function Header() {
               </Link>
             </div>
           </div>
-
         </div>
+
+        {/* CENTER: Logo (Absolute positioning so it doesn't affect header height) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <Link href="/" className="hover:opacity-80 transition-opacity block">
+            <img 
+              src="/images/logo.png" 
+              alt="KIMOROJO" 
+              className="h-[100px] w-auto object-contain"
+            />
+          </Link>
+        </div>
+
       </div>
 
-      {/* Full-Width Mega Menu Dropdown - Slides down from the entire header */}
+      {/* Full-Width Mega Menu Dropdown */}
       <div 
         className={`absolute top-full left-0 right-0 w-full bg-white border-t border-gray-100 shadow-lg overflow-hidden transition-all duration-500 ease-in-out ${
           isShopOpen ? 'max-h-[500px] opacity-100 visible' : 'max-h-0 opacity-0 invisible'
         }`}
         dir={isFarsi ? 'rtl' : 'ltr'}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
       >
         <div className="max-w-7xl mx-auto px-6 py-12">
-          {/* Changed from 5 columns to 3 columns */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
-            {/* Column 1: JEWELLERY */}
+            {/* 1. JEWELLERY (Dynamic Categories) */}
             <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#b87333] mb-4">
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
                 {t('jewelry')}
               </h4>
               <ul className="space-y-3">
-                <li><Link href="/shop/necklaces" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('necklacesDrop')}</Link></li>
-                <li><Link href="/shop/bracelets" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('braceletsDrop')}</Link></li>
-                <li><Link href="/shop/rings" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('ringsDrop')}</Link></li>
-                <li><Link href="/shop/earrings" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('earringsDrop')}</Link></li>
-                <li><Link href="/shop/charms" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('charms')}</Link></li>
+                {categories.map((cat) => (
+                  <li key={cat.id}>
+                    <Link href={`/shop/${cat.slug}`} className="text-sm text-gray-600 hover:text-black transition-colors block">
+                      {isFarsi ? cat.name_fa : cat.name_en}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Column 2: THE GIFT SHOP */}
+            {/* 2. COLLECTIONS (Dynamic Collections) */}
             <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#b87333] mb-4">
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
+                {t('collectionsHeading')}
+              </h4>
+              <ul className="space-y-3">
+                {collections.map((col) => (
+                  <li key={col.id}>
+                    <Link href={`/collections/${col.slug}`} className="text-sm text-gray-600 hover:text-black transition-colors block">
+                      {isFarsi ? col.name_fa : col.name_en}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* 3. THE GIFT SHOP (Static - Left Alone) */}
+            <div>
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
                 {t('giftShop')}
               </h4>
               <ul className="space-y-3">
@@ -124,18 +214,6 @@ export default function Header() {
                 <li><Link href="/gifts/charms" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('personalisedCharms')}</Link></li>
                 <li><Link href="/gifts/zodiac" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('zodiacCollection')}</Link></li>
                 <li><Link href="/gifts/personalised" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('personalisedJewelry')}</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 3: COLLECTIONS */}
-            <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#b87333] mb-4">
-                {t('collectionsHeading')}
-              </h4>
-              <ul className="space-y-3">
-                <li><Link href="/collections/everyday" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('everydayEssentials')}</Link></li>
-                <li><Link href="/collections/statement" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('statementPieces')}</Link></li>
-                <li><Link href="/collections/bestsellers" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('bestSellers')}</Link></li>
               </ul>
             </div>
 

@@ -1,47 +1,120 @@
-"use client"; // <--- THIS MUST BE THE VERY FIRST LINE
+"use client";
 
 import Link from 'next/link';
-import { ArrowRight } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
+import { useEffect, useState } from 'react';
 
-// MOCK_DATA_START: Replace this array with data fetched from the backend API
-const mockProducts = [
-  { id: 1, name: "Gold Band", price: "$450", image: "https://images.unsplash.com/photo-1603974372039-adc49044b6bd?auto=format&fit=crop&w=400&q=80" },
-  { id: 2, name: "Silver Ring", price: "$120", image: "https://images.unsplash.com/photo-1603561591411-07134e71a2a9?auto=format&fit=crop&w=400&q=80" },
-  { id: 3, name: "Diamond Solitaire", price: "$1,200", image: "https://images.unsplash.com/photo-1599643477877-530eb83abc8e?auto=format&fit=crop&w=400&q=80" },
-  { id: 4, name: "Rose Gold Ring", price: "$350", image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80" },
-  { id: 5, name: "Platinum Band", price: "$800", image: "https://images.unsplash.com/photo-1611591437281-460bfbe1220a?auto=format&fit=crop&w=400&q=80" },
-];
-// MOCK_DATA_END
+const GOLD_PRICE_PER_GRAM_TOMAN = 4500000; 
 
-export default function CategoryRow({ titleKey, category }: { titleKey: string, category: string }) {
-  const { lang, t } = useLang();
+interface CategoryRowProps {
+  nameEn: string;
+  nameFa: string;
+  slug: string;
+}
+
+interface Product {
+  id: number;
+  name_en: string;
+  name_fa: string;
+  weight: number;
+  purity: string;
+  making_charges: number;
+  images: string[] | null;
+  category: { slug: string; name_en: string; name_fa: string } | null;
+}
+
+export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) {
+  const { t, lang } = useLang();
   const isFarsi = lang === 'fa';
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  // Dynamically choose the title based on language
+  const title = isFarsi ? nameFa : nameEn;
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/products');
+        const data = await res.json();
+        const allProducts = data.data || [];
+        
+        const filtered = allProducts.filter((p: Product) => p.category?.slug === slug);
+        setProducts(filtered);
+      } catch (error) {
+        console.error(`Failed to fetch products for ${slug}:`, error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, [slug]);
+
+  const formatToman = (amount: number) => {
+    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+  };
+
+  if (loading) {
+    return <div className="py-12 text-center text-gray-500">Loading {title}...</div>;
+  }
+
+  if (products.length === 0) {
+    return null; 
+  }
 
   return (
-    <section dir={isFarsi ? 'rtl' : 'ltr'} className="max-w-7xl mx-auto px-6 py-10">
+    // dir="rtl" automatically flips the flex layout (Title on right, View All on left)
+    <section className="py-12 px-6 max-w-7xl mx-auto" dir={isFarsi ? 'rtl' : 'ltr'}>
+      
+      {/* Header with Title and View All Button */}
       <div className="flex justify-between items-center mb-8">
-        <h2 className="text-2xl md:text-3xl font-serif text-gray-900">{t(titleKey)}</h2>
-        <Link href={`/shop/${category}`} className="flex items-center gap-2 text-sm font-medium text-gray-600 hover:text-black transition-colors">
-          {t('viewAll')} 
-          <ArrowRight className={`w-4 h-4 transition-transform ${isFarsi ? 'rotate-180' : ''}`} />
+        <h2 className="text-2xl md:text-3xl font-serif text-gray-900">
+          {title}
+        </h2>
+        <Link href={`/shop/${slug}`} className="text-sm font-medium text-gray-500 hover:text-black transition-colors uppercase tracking-wider">
+          {t('viewAll')}
         </Link>
       </div>
 
-      <div className="flex gap-6 overflow-x-auto pb-4 scrollbar-hide">
-        {mockProducts.map((product) => (
-          <Link href={`/product/${product.id}`} key={product.id} className="flex-shrink-0 w-64 group cursor-pointer">
-            <div className="aspect-square overflow-hidden bg-gray-100 mb-4">
-              <img 
-                src={product.image} 
-                alt={product.name} 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-105"
-              />
-            </div>
-            <h3 className="font-medium text-gray-900">{product.name}</h3>
-            <p className="text-sm text-gray-500 mt-1">{product.price}</p>
-          </Link>
-        ))}
+      {/* Horizontal Slider Container with Elegant Scrollbar */}
+      <div className="relative">
+        <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 elegant-scrollbar">
+          {products.map((product) => {
+            const itemName = isFarsi ? product.name_fa : product.name_en;
+            const itemPrice = (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+            
+            const itemImage = product.images && product.images.length > 0 
+              ? `http://127.0.0.1:8000/storage/${product.images[0]}`
+              : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
+
+            return (
+              <Link 
+                href={`/product/${product.id}`} 
+                key={product.id} 
+                className="group flex-shrink-0 w-[280px] snap-center"
+              >
+                {/* Image - Grayscale to color on hover */}
+                <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
+                  <img src={itemImage} alt={itemName} className="w-full h-full object-cover" />
+                </div>
+                
+                {/* Product Info */}
+                <div className="space-y-1">
+                  <h3 className="font-medium text-gray-900 group-hover:text-black transition-colors truncate">
+                    {itemName}
+                  </h3>
+                  <p className="text-sm text-gray-500">
+                    {product.purity} | {product.weight}g
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 mt-2">
+                    {formatToman(itemPrice)}
+                  </p>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </section>
   );
