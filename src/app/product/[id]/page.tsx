@@ -1,113 +1,239 @@
-import { notFound } from 'next/navigation';
-import AddToCartButton from '@/components/AddToCartButton';
+"use client";
+
+import { useState, useEffect, use } from 'react';
+import { useLang } from '@/context/LanguageContext';
+import { useFavorites } from '@/context/FavoritesContext';
+import Link from 'next/link';
+import { ShoppingBag, ArrowLeft, Heart } from 'lucide-react';
+import ProductCard from '@/components/ProductCard';
+
+const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
 
 interface Product {
   id: number;
   name_en: string;
   name_fa: string;
-  description_en: string | null;
-  description_fa: string | null;
+  description_en: string;
+  description_fa: string;
   weight: number;
   purity: string;
+  metal_type: string;
   making_charges: number;
   images: string[] | null;
-  category: { name_en: string; name_fa: string } | null;
-  collection: { name_en: string; name_fa: string } | null;
+  category: { slug: string; name_en: string; name_fa: string } | null;
+  collection: { slug: string; name_en: string; name_fa: string } | null;
 }
 
-export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
+export default function ProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { t, lang } = useLang();
+  const { addToFavorites, removeFromFavorites, isFavorite } = useFavorites();
+  const isFarsi = lang === 'fa';
+  const { id } = use(params);
   
-  const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`, {
-    cache: 'no-store',
-  });
-  
-  if (!res.ok) notFound();
-  
-  const data = await res.json();
-  if (!data.success || !data.data) notFound();
+  const [product, setProduct] = useState<Product | null>(null);
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedImage, setSelectedImage] = useState(0);
 
-  const product = data.data;
-  const GOLD_PRICE_PER_GRAM_TOMAN = 4500000; 
-  const totalPrice = (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`);
+        let currentProduct: Product | null = null;
+
+        if (res.ok) {
+          const data = await res.json();
+          currentProduct = data.data || data;
+        } else {
+          const allRes = await fetch('http://127.0.0.1:8000/api/products');
+          const allData = await allRes.json();
+          currentProduct = allData.data?.find((p: Product) => p.id === parseInt(id)) || null;
+        }
+
+        setProduct(currentProduct);
+
+        // Fetch related products from the same collection
+        if (currentProduct?.collection?.slug) {
+          const allRes = await fetch('http://127.0.0.1:8000/api/products');
+          const allData = await allRes.json();
+          const related = allData.data?.filter((p: Product) => 
+            p.collection?.slug === currentProduct.collection?.slug && p.id !== currentProduct.id
+          ).slice(0, 4) || []; // Limit to 4 related products
+          setRelatedProducts(related);
+        }
+      } catch (error) {
+        console.error("Failed to fetch product data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, [id]);
 
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' تومان';
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
+  const getProductPrice = (p: Product) => {
+    return (GOLD_PRICE_PER_GRAM_TOMAN * p.weight) + p.making_charges;
+  };
+
+  if (loading) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 text-center" dir={isFarsi ? 'rtl' : 'ltr'}>
+        <p className="text-gray-500">{isFarsi ? 'در حال بارگذاری...' : 'Loading...'}</p>
+      </div>
+    );
+  }
+
+  if (!product) {
+    return (
+      <div className="max-w-7xl mx-auto px-6 py-24 text-center" dir={isFarsi ? 'rtl' : 'ltr'}>
+        <h1 className="text-4xl font-serif text-gray-900 mb-4">404</h1>
+        <p className="text-gray-500 mb-8">{isFarsi ? 'محصول یافت نشد.' : 'Product not found.'}</p>
+        <Link href="/shop" className="inline-flex items-center gap-2 bg-black text-white px-6 py-3 text-sm uppercase tracking-wider hover:bg-gray-800 transition-colors">
+          <ArrowLeft className={`w-4 h-4 ${isFarsi ? 'rotate-180' : ''}`} />
+          {isFarsi ? 'بازگشت به فروشگاه' : 'Back to Shop'}
+        </Link>
+      </div>
+    );
+  }
+
+  const productName = isFarsi ? product.name_fa : product.name_en;
+  const productDesc = isFarsi ? product.description_fa : product.description_en;
+  const price = getProductPrice(product);
+  const isFav = isFavorite(product.id);
+  
+  const images = product.images && product.images.length > 0 
+    ? product.images.map(img => `http://127.0.0.1:8000/storage/${img}`)
+    : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
+
   return (
-    <div className="container mx-auto px-4 py-12 md:py-20">
-      <div className="grid md:grid-cols-2 gap-12 lg:gap-20">
+    <div className="max-w-7xl mx-auto px-6 py-12" dir={isFarsi ? 'rtl' : 'ltr'}>
+      {/* Back Button */}
+      <Link href="/shop" className="inline-flex items-center gap-2 text-gray-500 hover:text-black transition-colors mb-8 group">
+        <ArrowLeft className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isFarsi ? 'rotate-180 group-hover:translate-x-1' : ''}`} />
+        <span className="text-sm uppercase tracking-wider">{isFarsi ? 'بازگشت به فروشگاه' : 'Back to Shop'}</span>
+      </Link>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
         
-        {/* Image Section - Grayscale by default, color on hover (Project Rule) */}
-        <div className="relative aspect-square bg-gray-100 rounded-xl overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ease-in-out shadow-sm hover:shadow-xl">
-          <div className="absolute inset-0 flex items-center justify-center text-gray-400">
-            <span className="text-sm">Product Image Placeholder</span>
+        {/* Left: Image Gallery */}
+        <div className="space-y-4">
+          <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ease-in-out">
+            <img 
+              src={images[selectedImage]} 
+              alt={productName} 
+              className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
+            />
           </div>
+          
+          {/* Thumbnails */}
+          {images.length > 1 && (
+            <div className="flex gap-3 overflow-x-auto pb-2">
+              {images.map((img, index) => (
+                <button 
+                  key={index}
+                  onClick={() => setSelectedImage(index)}
+                  className={`flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden border-2 transition-all grayscale hover:grayscale-0 ${
+                    selectedImage === index ? 'border-black' : 'border-transparent hover:border-gray-300'
+                  }`}
+                >
+                  <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Details Section */}
-        <div className="flex flex-col justify-center">
-          <p className="text-sm font-medium text-amber-600 mb-2 uppercase tracking-wider">
-            {product.collection?.name_en || 'Collection'}
-          </p>
-          
-          <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
-            {product.name_fa}
-          </h1>
-          <p className="text-lg text-gray-500 mb-6 font-light">
-            {product.name_en}
+        {/* Right: Product Details */}
+        <div className="flex flex-col justify-center space-y-8">
+          <div>
+            {product.collection && (
+              <p className="text-sm font-medium text-[#682535] mb-2 uppercase tracking-wider">
+                {isFarsi ? product.collection.name_fa : product.collection.name_en}
+              </p>
+            )}
+            <h1 className="text-3xl md:text-4xl font-serif text-gray-900 mb-4">{productName}</h1>
+            <p className="text-2xl font-medium text-gray-900">{formatToman(price)}</p>
+          </div>
+
+          <p className="text-gray-600 leading-relaxed">
+            {productDesc || (isFarsi ? 'توضیحات محصول به زودی اضافه می‌شود.' : 'Product description coming soon.')}
           </p>
 
           {/* Specifications */}
-          <div className="flex flex-wrap gap-3 mb-8">
-            <span className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium text-gray-700">
-              Purity: {product.purity}
-            </span>
-            <span className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium text-gray-700">
-              Weight: {product.weight}g
-            </span>
-            {product.category && (
-              <span className="bg-gray-50 border border-gray-200 px-4 py-2 rounded-full text-sm font-medium text-gray-700">
-                Category: {product.category.name_en}
-              </span>
-            )}
-          </div>
-
-          {/* Dynamic Price Box */}
-          <div className="bg-gradient-to-br from-amber-50 to-yellow-50 border border-amber-200 rounded-xl p-6 mb-8">
-            <p className="text-xs font-semibold text-amber-800 uppercase tracking-wide mb-1">
-              Total Estimated Price
-            </p>
-            <p className="text-4xl font-bold text-amber-900 mb-2">
-              {formatToman(totalPrice)}
-            </p>
-            <p className="text-xs text-amber-700/70">
-              Based on {formatToman(GOLD_PRICE_PER_GRAM_TOMAN).replace(' تومان', '')}/g + {formatToman(product.making_charges)} making charges
-            </p>
-          </div>
-
-          {/* Description */}
-          <div className="mb-10">
-            <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide mb-3">
-              Description
-            </h3>
-            <p className="text-gray-600 leading-relaxed text-base">
-              {product.description_fa || product.description_en || 'An exquisite piece of jewelry, crafted with precision and care.'}
-            </p>
+          <div className="grid grid-cols-2 gap-4 py-6 border-t border-b border-gray-100">
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{isFarsi ? 'وزن' : 'Weight'}</p>
+              <p className="text-gray-900 font-medium">{product.weight}g</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{isFarsi ? 'عیار' : 'Purity'}</p>
+              <p className="text-gray-900 font-medium">{product.purity}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{isFarsi ? 'جنس' : 'Metal'}</p>
+              <p className="text-gray-900 font-medium capitalize">{product.metal_type}</p>
+            </div>
+            <div>
+              <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{isFarsi ? 'دسته‌بندی' : 'Category'}</p>
+              <p className="text-gray-900 font-medium capitalize">
+                {product.category ? (isFarsi ? product.category.name_fa : product.category.name_en) : 'N/A'}
+              </p>
+            </div>
           </div>
 
           {/* Action Buttons */}
           <div className="flex gap-4">
-            {/* THIS IS THE WIRED-UP BUTTON */}
-            <AddToCartButton productId={product.id} />
+            <button className="flex-1 bg-black text-white py-4 rounded-sm text-sm uppercase tracking-widest font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3">
+              <ShoppingBag className="w-5 h-5" />
+              {isFarsi ? 'افزودن به سبد خرید' : 'Add to Cart'}
+            </button>
             
-            <button className="px-6 py-4 border border-gray-300 rounded-lg hover:border-gray-900 hover:bg-gray-50 transition-all duration-300 text-xl">
-              ♡
+            <button 
+              onClick={() => isFav ? removeFromFavorites(product.id) : addToFavorites(product.id)}
+              className={`px-6 py-4 border rounded-sm transition-all duration-300 flex items-center justify-center ${
+                isFav ? 'border-[#682535] text-[#682535] bg-[#682535]/5' : 'border-gray-300 text-gray-400 hover:border-gray-900 hover:text-gray-900'
+              }`}
+              aria-label="Toggle Favorite"
+            >
+              <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
             </button>
           </div>
         </div>
       </div>
+
+      {/* More from this Collection Section */}
+      {relatedProducts.length > 0 && (
+        <section className="mt-24 pt-12 border-t border-gray-100">
+          <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-8 text-center">
+            {isFarsi ? 'محصولات بیشتر از این مجموعه' : 'More from this Collection'}
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
+            {relatedProducts.map((relProduct) => {
+              const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
+              const relPrice = getProductPrice(relProduct);
+              const relImage = relProduct.images && relProduct.images.length > 0 
+                ? `http://127.0.0.1:8000/storage/${relProduct.images[0]}` 
+                : '';
+              
+              return (
+                <ProductCard 
+                  key={relProduct.id} 
+                  id={relProduct.id} 
+                  name={relName} 
+                  price={formatToman(relPrice)} 
+                  image={relImage} 
+                  category={relProduct.collection?.slug || ''} 
+                />
+              );
+            })}
+          </div>
+        </section>
+      )}
+
     </div>
   );
 }
