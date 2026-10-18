@@ -98,8 +98,10 @@ export default function ShopPage({ params }: { params: Promise<{ category: strin
     currentPage * productsPerPage
   );
 
+  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   if (loading) {

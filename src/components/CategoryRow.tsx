@@ -29,9 +29,6 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Dynamically choose the title based on language
-  const title = isFarsi ? nameFa : nameEn;
-
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -39,6 +36,7 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
         const data = await res.json();
         const allProducts = data.data || [];
         
+        // This now correctly uses the 'slug' prop passed from page.tsx
         const filtered = allProducts.filter((p: Product) => p.category?.slug === slug);
         setProducts(filtered);
       } catch (error) {
@@ -51,12 +49,14 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
     fetchProducts();
   }, [slug]);
 
+  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   if (loading) {
-    return <div className="py-12 text-center text-gray-500">Loading {title}...</div>;
+    return <div className="py-12 text-center text-gray-500">Loading {isFarsi ? nameFa : nameEn}...</div>;
   }
 
   if (products.length === 0) {
@@ -64,20 +64,16 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
   }
 
   return (
-    // dir="rtl" automatically flips the flex layout (Title on right, View All on left)
     <section className="py-12 px-6 max-w-7xl mx-auto" dir={isFarsi ? 'rtl' : 'ltr'}>
-      
-      {/* Header with Title and View All Button */}
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl md:text-3xl font-serif text-gray-900">
-          {title}
+          {isFarsi ? nameFa : nameEn}
         </h2>
         <Link href={`/shop/${slug}`} className="text-sm font-medium text-gray-500 hover:text-black transition-colors uppercase tracking-wider">
           {t('viewAll')}
         </Link>
       </div>
 
-      {/* Horizontal Slider Container with Elegant Scrollbar */}
       <div className="relative">
         <div className="flex overflow-x-auto snap-x snap-mandatory gap-6 pb-4 elegant-scrollbar">
           {products.map((product) => {
@@ -94,12 +90,9 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
                 key={product.id} 
                 className="group flex-shrink-0 w-[280px] snap-center"
               >
-                {/* Image - Grayscale to color on hover */}
                 <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden mb-4 grayscale group-hover:grayscale-0 transition-all duration-500">
                   <img src={itemImage} alt={itemName} className="w-full h-full object-cover" />
                 </div>
-                
-                {/* Product Info */}
                 <div className="space-y-1">
                   <h3 className="font-medium text-gray-900 group-hover:text-black transition-colors truncate">
                     {itemName}

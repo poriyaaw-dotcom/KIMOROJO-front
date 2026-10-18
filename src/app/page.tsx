@@ -19,35 +19,39 @@ export default function Home() {
   useEffect(() => {
     fetch('http://127.0.0.1:8000/api/categories')
       .then(res => res.json())
-      .then(data => setCategories(data.data || []))
-      .catch(err => console.error("Failed to fetch categories", err));
+      .then(data => {
+        console.log("✅ Categories fetched:", data);
+        setCategories(data.data || []);
+      })
+      .catch(err => console.error("❌ Failed to fetch categories", err));
   }, []);
 
   return (
     <div className="bg-white">
       <HeroSection />
       <CollectionsGrid />
-      
-      {/* Sticky Banner stays at z-0 */}
       <BannerSlider />
       
-      {/* This wrapper ensures everything below the banner slides OVER it with a solid white background */}
       <div className="relative z-10 bg-white">
-        
         <div className="pt-20">
-          {categories.map((cat) => (
-            <CategoryRow 
-              key={cat.id} 
-              nameEn={cat.name_en}
-              nameFa={cat.name_fa}
-              slug={cat.slug} 
-            />
-          ))}
+          {categories.length === 0 ? (
+            <div className="text-center py-12 text-gray-500">
+              Loading categories...
+            </div>
+          ) : (
+            categories.map((cat) => (
+              <CategoryRow 
+                key={cat.id} 
+                nameEn={cat.name_en}
+                nameFa={cat.name_fa}
+                slug={cat.slug} 
+              />
+            ))
+          )}
         </div>
-
-        {/* Footer removed from here because it is already in layout.tsx */}
-        
       </div>
+      
+      {/* Footer is NOT here - it's in layout.tsx */}
     </div>
   );
 }

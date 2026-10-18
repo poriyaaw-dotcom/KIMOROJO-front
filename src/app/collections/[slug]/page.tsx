@@ -50,11 +50,9 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
         const allProducts = productsData.data || [];
         const allCollections = collectionsData.data || [];
         
-        // Find the specific collection matching the URL slug
         const currentCollection = allCollections.find((c: Collection) => c.slug === slug);
         setCollection(currentCollection || null);
         
-        // Filter products that belong to this collection
         const filteredProducts = allProducts.filter((p: Product) => p.collection?.slug === slug);
         setProducts(filteredProducts);
       } catch (error) {
@@ -66,8 +64,10 @@ export default function CollectionPage({ params }: { params: Promise<{ slug: str
     fetchData();
   }, [slug]);
 
+  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   const getProductPrice = (product: Product) => {

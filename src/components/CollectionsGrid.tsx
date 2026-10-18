@@ -19,24 +19,17 @@ export default function CollectionsGrid() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    console.log("🚀 CollectionsGrid useEffect STARTED");
     fetch('http://127.0.0.1:8000/api/collections')
-      .then((res) => {
-        console.log("📡 Fetch response received, status:", res.status);
-        return res.json();
-      })
+      .then((res) => res.json())
       .then((data) => {
-        console.log("✅ Data parsed:", data);
         setCollections(data.data || []);
         setLoading(false);
       })
       .catch((err) => {
-        console.error("❌ Fetch FAILED:", err);
+        console.error("Failed to fetch collections", err);
         setLoading(false);
       });
   }, []);
-
-  console.log("🔄 CollectionsGrid rendering, loading state is:", loading);
 
   if (loading) {
     return (
@@ -60,8 +53,6 @@ export default function CollectionsGrid() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
         {collections.map((collection, index) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
-          
-          // FIX: Prepend the full storage URL to the image path
           const image = collection.image 
             ? `http://127.0.0.1:8000/storage/${collection.image}`
             : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=600&q=80";

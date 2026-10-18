@@ -39,7 +39,7 @@ export default function Footer() {
               <img src="/images/logo.png" alt="KIMOROJO" className="h-32 w-auto object-contain" />
             </Link>
             
-            {/* Social Media Links (Moved here) */}
+            {/* Social Media Links */}
             <div className="flex gap-4 pt-2 justify-center md:justify-start">
               <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram">
                 <InstagramIcon />
@@ -81,16 +81,18 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Customer Service (Removed Shipping, Privacy, Terms) */}
+          {/* Column 3: Customer Service (Hardcoded to guarantee it works) */}
           <div>
-            <h3 className="font-serif text-lg text-black mb-6">{t('customerService') || 'Customer Service'}</h3>
+            <h3 className="font-serif text-lg text-black mb-6">
+              {isFarsi ? 'خدمات مشتریان' : 'Customer Service'}
+            </h3>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li><Link href="/contact" className="hover:text-black transition-colors">{t('contactUs') || 'Contact Us'}</Link></li>
-              <li><Link href="/faq" className="hover:text-black transition-colors">{t('faq') || 'FAQ'}</Link></li>
+              <li><Link href="/contact" className="hover:text-black transition-colors">{isFarsi ? 'تماس با ما' : 'Contact Us'}</Link></li>
+              <li><Link href="/faq" className="hover:text-black transition-colors">{isFarsi ? 'سوالات متداول' : 'FAQ'}</Link></li>
             </ul>
           </div>
 
-          {/* Column 4: E-Namad Image (Replaced Newsletter) */}
+          {/* Column 4: E-Namad Image */}
           <div className="flex flex-col items-center md:items-start">
             <img 
               src="/images/enamad.png" 
