@@ -34,7 +34,6 @@ export default function FavoritesPage() {
         const data = await res.json();
         const allProducts = data.data || [];
         
-        // Only keep products that are in the favorites list
         const favProducts = allProducts.filter((p: Product) => favorites.includes(p.id));
         setProducts(favProducts);
       } catch (error) {
@@ -46,8 +45,10 @@ export default function FavoritesPage() {
     fetchProducts();
   }, [favorites]);
 
+  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   const getProductPrice = (product: Product) => {

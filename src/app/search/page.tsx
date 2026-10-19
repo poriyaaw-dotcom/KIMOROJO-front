@@ -36,7 +36,6 @@ export default function SearchPage() {
         const data = await res.json();
         const allProducts = data.data || [];
         
-        // Filter products by name (English or Persian)
         const filtered = allProducts.filter((p: Product) => 
           p.name_en.toLowerCase().includes(query.toLowerCase()) || 
           p.name_fa.includes(query)
@@ -51,8 +50,10 @@ export default function SearchPage() {
     fetchProducts();
   }, [query]);
 
+  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
-    return new Intl.NumberFormat('fa-IR').format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    const locale = isFarsi ? 'fa-IR' : 'en-US';
+    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   const getProductPrice = (product: Product) => {

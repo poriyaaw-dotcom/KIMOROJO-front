@@ -1,46 +1,56 @@
 "use client";
 
 import { useState } from 'react';
+import { useCart } from '@/context/CartContext';
+import { ShoppingBag, Check } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
 
-export default function AddToCartButton({ productId }: { productId: number }) {
-  const { t } = useLang();
+interface AddToCartButtonProps {
+  productId: number;
+  productName: string;
+  productPrice: number;
+  productImage: string;
+}
+
+export default function AddToCartButton({ productId, productName, productPrice, productImage }: AddToCartButtonProps) {
+  const { addToCart } = useCart();
+  const { lang } = useLang();
+  const isFarsi = lang === 'fa';
   const [isAdded, setIsAdded] = useState(false);
 
   const handleAddToCart = () => {
-    // 1. Get existing cart from localStorage
-    const existingCart = JSON.parse(localStorage.getItem('cart') || '[]');
-    
-    // 2. Check if this product is already in the cart
-    const existingItemIndex = existingCart.findIndex((item: any) => item.id === productId);
-    
-    if (existingItemIndex > -1) {
-      // If yes, increment quantity
-      existingCart[existingItemIndex].quantity += 1;
-    } else {
-      // If no, add it with quantity 1
-      existingCart.push({ id: productId, quantity: 1 });
-    }
-    
-    // 3. Save back to localStorage
-    localStorage.setItem('cart', JSON.stringify(existingCart));
-    
-    // 4. Give the user visual feedback
+    addToCart({
+      id: productId,
+      name: productName,
+      price: productPrice,
+      image: productImage,
+      quantity: 1,
+    });
     setIsAdded(true);
-    setTimeout(() => setIsAdded(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setIsAdded(false), 2000);
   };
 
   return (
-    <button 
+    <button
       onClick={handleAddToCart}
       disabled={isAdded}
-      className={`flex-1 py-4 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl active:scale-[0.98] ${
-        isAdded 
-          ? 'bg-green-700 text-white cursor-default' 
-          : 'bg-gray-900 text-white hover:bg-gray-800'
+      className={`flex-1 py-4 rounded-sm text-sm uppercase tracking-widest font-medium transition-all duration-300 flex items-center justify-center gap-3 ${
+        isAdded
+          ? 'bg-green-600 text-white cursor-default'
+          : 'bg-black text-white hover:bg-gray-800'
       }`}
     >
-      {isAdded ? (t('addedToCart') || 'Added!') : (t('addToCart') || 'Add to Cart')}
+      {isAdded ? (
+        <>
+          <Check className="w-5 h-5" />
+          {isFarsi ? 'اضافه شد' : 'Added'}
+        </>
+      ) : (
+        <>
+          <ShoppingBag className="w-5 h-5" />
+          {isFarsi ? 'افزودن به سبد خرید' : 'Add to Cart'}
+        </>
+      )}
     </button>
   );
 }

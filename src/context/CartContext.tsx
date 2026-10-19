@@ -22,16 +22,25 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const [cartCount, setCartCount] = useState(0);
+  const [isLoaded, setIsLoaded] = useState(false);
 
+  // Load cart from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('kimorojo_cart');
     if (saved) {
-      const parsed = JSON.parse(saved);
-      setCart(parsed);
-      setCartCount(parsed.reduce((acc: number, item: CartItem) => acc + item.quantity, 0));
+      try {
+        const parsed = JSON.parse(saved);
+        setCart(parsed);
+      } catch (e) {
+        console.error('Failed to parse cart from localStorage', e);
+        localStorage.removeItem('kimorojo_cart');
+      }
     }
+    setIsLoaded(true);
   }, []);
+
+  // FIX: Calculate cartCount dynamically from the cart array so they NEVER get out of sync
+  const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   const addToCart = (item: CartItem) => {
     setCart((prev) => {
@@ -45,7 +54,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
         newCart = [...prev, { ...item, quantity: 1 }];
       }
       localStorage.setItem('kimorojo_cart', JSON.stringify(newCart));
-      setCartCount(newCart.reduce((acc, i) => acc + i.quantity, 0));
       return newCart;
     });
   };
@@ -54,16 +62,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setCart((prev) => {
       const newCart = prev.filter((i) => i.id !== id);
       localStorage.setItem('kimorojo_cart', JSON.stringify(newCart));
-      setCartCount(newCart.reduce((acc, i) => acc + i.quantity, 0));
       return newCart;
     });
   };
 
   const clearCart = () => {
     setCart([]);
-    setCartCount(0);
     localStorage.removeItem('kimorojo_cart');
   };
+
+  // FIX: Don't render children until localStorage is fully loaded
+  // This prevents Next.js from rendering an "empty" cart page prematurely
+  if (!isLoaded) {
+    return null;
+  }
 
   return (
     <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, cartCount }}>

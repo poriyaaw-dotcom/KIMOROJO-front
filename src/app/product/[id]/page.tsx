@@ -4,8 +4,9 @@ import { useState, useEffect, use } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Link from 'next/link';
-import { ShoppingBag, ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
+import AddToCartButton from '@/components/AddToCartButton';
 
 const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
 
@@ -52,13 +53,12 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
         setProduct(currentProduct);
 
-        // Fetch related products from the same collection
         if (currentProduct?.collection?.slug) {
           const allRes = await fetch('http://127.0.0.1:8000/api/products');
           const allData = await allRes.json();
           const related = allData.data?.filter((p: Product) => 
             p.collection?.slug === currentProduct.collection?.slug && p.id !== currentProduct.id
-          ).slice(0, 4) || []; // Limit to 4 related products
+          ).slice(0, 4) || [];
           setRelatedProducts(related);
         }
       } catch (error) {
@@ -111,17 +111,15 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12" dir={isFarsi ? 'rtl' : 'ltr'}>
-      {/* Back Button */}
       <Link href="/shop" className="inline-flex items-center gap-2 text-gray-500 hover:text-black transition-colors mb-8 group">
         <ArrowLeft className={`w-4 h-4 transition-transform group-hover:-translate-x-1 ${isFarsi ? 'rotate-180 group-hover:translate-x-1' : ''}`} />
         <span className="text-sm uppercase tracking-wider">{isFarsi ? 'بازگشت به فروشگاه' : 'Back to Shop'}</span>
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
-        
-        {/* Left: Image Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden grayscale hover:grayscale-0 transition-all duration-700 ease-in-out">
+          {/* FIX: Removed 'grayscale' from main image so it is always colored */}
+          <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden transition-all duration-700 ease-in-out">
             <img 
               src={images[selectedImage]} 
               alt={productName} 
@@ -129,7 +127,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             />
           </div>
           
-          {/* Thumbnails */}
           {images.length > 1 && (
             <div className="flex gap-3 overflow-x-auto pb-2">
               {images.map((img, index) => (
@@ -147,7 +144,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
-        {/* Right: Product Details */}
         <div className="flex flex-col justify-center space-y-8">
           <div>
             {product.collection && (
@@ -163,7 +159,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             {productDesc || (isFarsi ? 'توضیحات محصول به زودی اضافه می‌شود.' : 'Product description coming soon.')}
           </p>
 
-          {/* Specifications */}
           <div className="grid grid-cols-2 gap-4 py-6 border-t border-b border-gray-100">
             <div>
               <p className="text-xs text-gray-400 uppercase tracking-wider mb-1">{isFarsi ? 'وزن' : 'Weight'}</p>
@@ -185,12 +180,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
-          {/* Action Buttons */}
           <div className="flex gap-4">
-            <button className="flex-1 bg-black text-white py-4 rounded-sm text-sm uppercase tracking-widest font-medium hover:bg-gray-800 transition-colors flex items-center justify-center gap-3">
-              <ShoppingBag className="w-5 h-5" />
-              {isFarsi ? 'افزودن به سبد خرید' : 'Add to Cart'}
-            </button>
+            {/* FIX: Passed full product details to the button */}
+            <AddToCartButton 
+              productId={product.id} 
+              productName={productName} 
+              productPrice={price} 
+              productImage={images[0]} 
+            />
             
             <button 
               onClick={() => isFav ? removeFromFavorites(product.id) : addToFavorites(product.id)}
@@ -205,7 +202,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
         </div>
       </div>
 
-      {/* More from this Collection Section */}
       {relatedProducts.length > 0 && (
         <section className="mt-24 pt-12 border-t border-gray-100">
           <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-8 text-center">
@@ -233,7 +229,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           </div>
         </section>
       )}
-
     </div>
   );
 }

@@ -41,13 +41,13 @@ export default function Footer() {
             
             {/* Social Media Links */}
             <div className="flex gap-4 pt-2 justify-center md:justify-start">
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram">
+              <a href="https://instagram.com/kimorojo" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram">
                 <InstagramIcon />
               </a>
               <a href="https://t.me" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Telegram">
                 <Send className="w-5 h-5" />
               </a>
-              <a href="https://wa.me" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="WhatsApp">
+              <a href="https://wa.me/message/GNDRO2I67XSPN1" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="WhatsApp">
                 <WhatsAppIcon />
               </a>
             </div>
@@ -55,7 +55,7 @@ export default function Footer() {
             <div className="space-y-3 pt-4">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-400" />
-                <span dir="ltr">+98 21 1234 5678</span>
+                <span dir="ltr">+98 992 016 7420</span>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-4 h-4 text-gray-400" />
@@ -63,7 +63,11 @@ export default function Footer() {
               </div>
               <div className="flex items-start gap-3 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                <span>{isFarsi ? 'تهران، خیابان ولیعصر، پلاک ۱۲۳' : 'Tehran, Valiasr St., No. 123'}</span>
+                <span>
+                  {isFarsi 
+                    ? 'تهران، بازار بزرگ، ۱۵ خرداد' 
+                    : 'Tehran, Grand Bazaar, 15th Khordad St.'}
+                </span>
               </div>
             </div>
           </div>
@@ -81,7 +85,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          {/* Column 3: Customer Service (Hardcoded to guarantee it works) */}
+          {/* Column 3: Customer Service */}
           <div>
             <h3 className="font-serif text-lg text-black mb-6">
               {isFarsi ? 'خدمات مشتریان' : 'Customer Service'}

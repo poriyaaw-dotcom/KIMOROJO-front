@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
+import { useCart } from '@/context/CartContext'; // <-- ADDED
 
 interface Category {
   id: number;
@@ -22,6 +23,7 @@ interface Collection {
 
 export default function Header() {
   const { lang, setLang, t } = useLang();
+  const { cartCount } = useCart(); // <-- ADDED
   const router = useRouter();
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
@@ -44,7 +46,6 @@ export default function Header() {
     }, 200);
   };
 
-  // Fetch categories and collections for the dynamic mega menu
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -65,10 +66,7 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      {/* LOCKED HEIGHT: h-20 (80px). The header will NEVER grow past this. */}
       <div className="max-w-7xl mx-auto px-6 h-20 relative">
-        
-        {/* Grid for Left and Right items only (Logo is removed from flow) */}
         <div className="grid grid-cols-2 h-full items-center">
           
           {/* LEFT: Search & Language */}
@@ -123,20 +121,25 @@ export default function Header() {
                 onMouseEnter={handleMouseEnter}
                 onMouseLeave={handleMouseLeave}
               >
-                {/* Shop button now links to /shop */}
                 <Link href="/shop" className={`hover:text-black transition-colors py-2 ${isShopOpen ? 'text-black underline underline-offset-8 decoration-1' : ''}`}>
                   {t('shop')}
                 </Link>
               </div>
-
               <Link href="/contact" className="hover:text-black transition-colors">{t('contact')}</Link>
               <Link href="/about" className="hover:text-black transition-colors">{t('about')}</Link>
             </nav>
             
             <div className="flex items-center gap-4 text-gray-700">
-              <Link href="/cart" className="hover:text-black transition-colors" aria-label={t('cart')}>
+              {/* UPDATED CART ICON WITH BADGE */}
+              <Link href="/cart" className="relative hover:text-black transition-colors" aria-label={t('cart')}>
                 <ShoppingBag className="w-5 h-5" />
+                {cartCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-[#682535] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
+                    {cartCount}
+                  </span>
+                )}
               </Link>
+              
               <Link href="/favorites" className="hover:text-black transition-colors" aria-label={t('favorites')}>
                 <Heart className="w-5 h-5" />
               </Link>
@@ -147,7 +150,7 @@ export default function Header() {
           </div>
         </div>
 
-        {/* CENTER: Logo (Absolute positioning so it doesn't affect header height) */}
+        {/* CENTER: Logo */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <Link href="/" className="hover:opacity-80 transition-opacity block">
             <img 
@@ -157,7 +160,6 @@ export default function Header() {
             />
           </Link>
         </div>
-
       </div>
 
       {/* Full-Width Mega Menu Dropdown */}
@@ -171,8 +173,6 @@ export default function Header() {
       >
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            
-            {/* 1. JEWELLERY (Dynamic Categories) */}
             <div>
               <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
                 {t('jewelry')}
@@ -188,7 +188,6 @@ export default function Header() {
               </ul>
             </div>
 
-            {/* 2. COLLECTIONS (Dynamic Collections) */}
             <div>
               <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
                 {t('collectionsHeading')}
@@ -204,7 +203,6 @@ export default function Header() {
               </ul>
             </div>
 
-            {/* 3. THE GIFT SHOP (Static - Left Alone) */}
             <div>
               <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
                 {t('giftShop')}
@@ -216,7 +214,6 @@ export default function Header() {
                 <li><Link href="/gifts/personalised" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('personalisedJewelry')}</Link></li>
               </ul>
             </div>
-
           </div>
         </div>
       </div>

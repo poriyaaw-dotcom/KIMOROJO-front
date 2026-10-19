@@ -33,8 +33,8 @@ export default function CollectionsGrid() {
 
   if (loading) {
     return (
-      <section className="max-w-7xl mx-auto px-6 py-20">
-        <h2 className="text-3xl md:text-4xl font-serif text-center mb-12 text-gray-900 uppercase tracking-widest">
+      <section className="max-w-7xl mx-auto px-6 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
+        <h2 className={`text-3xl md:text-4xl text-center mb-12 text-gray-900 ${isFarsi ? 'font-normal' : 'font-serif uppercase tracking-widest'}`}>
           {t('collections')}
         </h2>
         <div className="text-center text-gray-500">
@@ -45,13 +45,14 @@ export default function CollectionsGrid() {
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20">
-      <h2 className="text-3xl md:text-4xl font-serif text-center mb-12 text-gray-900 uppercase tracking-widest">
+    <section className="max-w-7xl mx-auto px-6 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
+      {/* Main Heading */}
+      <h2 className={`text-3xl md:text-4xl text-center mb-12 text-gray-900 ${isFarsi ? 'font-normal' : 'font-serif uppercase tracking-widest'}`}>
         {t('collections')}
       </h2>
       
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-        {collections.map((collection, index) => {
+        {collections.map((collection) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
           const image = collection.image 
             ? `http://127.0.0.1:8000/storage/${collection.image}`
@@ -69,7 +70,11 @@ export default function CollectionsGrid() {
                 className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-110"
               />
               <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-3 text-center transition-all duration-300 group-hover:bg-black/80">
-                <span className="text-white font-serif text-sm md:text-base tracking-widest uppercase">
+                {/* FIX: font-normal for Farsi, forced uppercase for English */}
+                <span 
+                  className={`text-white text-sm md:text-base ${isFarsi ? 'font-normal' : 'font-serif tracking-widest'}`}
+                  style={{ textTransform: isFarsi ? 'none' : 'uppercase' }}
+                >
                   {name}
                 </span>
               </div>

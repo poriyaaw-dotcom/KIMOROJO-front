@@ -1,44 +1,71 @@
 @import "tailwindcss";
 
-@theme {
-  --font-sans: var(--font-inter);
-  --font-serif: var(--font-playfair);
+/* 1. Declare the fonts manually using standard CSS */
+@font-face {
+  font-family: 'BYekan Main';
+  src: url('/fonts/BYekan-Regular.ttf') format('truetype');
+  font-weight: 400 500;
+  font-style: normal;
+  font-display: swap;
 }
 
+@font-face {
+  font-family: 'BYekan Bold';
+  src: url('/fonts/BYekan-Bold.ttf') format('truetype');
+  font-weight: 700 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. Tell Tailwind to use these fonts */
+@theme {
+  --font-sans: 'BYekan Main', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --font-bold: 'BYekan Bold', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+}
+
+/* 3. Force the font on the body */
 body {
+  font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
   background-color: white;
   color: #111827;
 }
-/* Add this to the very bottom of globals.css */
+
 html[lang="fa"] body {
-  font-family: var(--font-vazir);
+  font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
 }
+
 /* Hide scrollbar for Chrome, Safari and Opera */
 .scrollbar-hide::-webkit-scrollbar {
     display: none;
 }
+
 /* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-    -ms-overflow-style: none;  /* IE and Edge */
-    scrollbar-width: none;  /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }
+
 /* Elegant Custom Scrollbar for Sliders */
 .elegant-scrollbar::-webkit-scrollbar {
   height: 4px;
 }
+
 .elegant-scrollbar::-webkit-scrollbar-track {
-  background: #f3f4f6; /* light gray track */
+  background: #f3f4f6;
   border-radius: 9999px;
   margin: 0 1rem;
 }
+
 .elegant-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db; /* elegant grey thumb */
+  background: #d1d5db;
   border-radius: 9999px;
 }
+
 .elegant-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af; /* slightly darker on hover */
+  background: #9ca3af;
 }
-/* Firefox Support */
+
 .elegant-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f3f4f6;
