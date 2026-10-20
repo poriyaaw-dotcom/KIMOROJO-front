@@ -8,11 +8,13 @@ export interface CartItem {
   price: number;
   image: string;
   quantity: number;
+  stock: number; // Added stock to track limits
 }
 
 interface CartContextType {
   cart: CartItem[];
-  addToCart: (item: CartItem) => void;
+  addToCart: (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => void;
+  updateQuantity: (id: number, quantity: number) => void;
   removeFromCart: (id: number) => void;
   clearCart: () => void;
   cartCount: number;
@@ -24,7 +26,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
 
-  // Load cart from localStorage on mount
   useEffect(() => {
     const saved = localStorage.getItem('kimorojo_cart');
     if (saved) {
@@ -39,20 +40,38 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setIsLoaded(true);
   }, []);
 
-  // FIX: Calculate cartCount dynamically from the cart array so they NEVER get out of sync
   const cartCount = cart.reduce((total, item) => total + item.quantity, 0);
 
-  const addToCart = (item: CartItem) => {
+  const addToCart = (item: Omit<CartItem, 'quantity'> & { quantity?: number }) => {
     setCart((prev) => {
       const existing = prev.find((i) => i.id === item.id);
       let newCart;
+      const qtyToAdd = item.quantity || 1;
+      
       if (existing) {
+        // Check stock limit
+        const newQty = Math.min(existing.quantity + qtyToAdd, item.stock);
         newCart = prev.map((i) =>
-          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+          i.id === item.id ? { ...i, quantity: newQty } : i
         );
       } else {
-        newCart = [...prev, { ...item, quantity: 1 }];
+        newCart = [...prev, { ...item, quantity: qtyToAdd }];
       }
+      localStorage.setItem('kimorojo_cart', JSON.stringify(newCart));
+      return newCart;
+    });
+  };
+
+  const updateQuantity = (id: number, quantity: number) => {
+    setCart((prev) => {
+      const newCart = prev.map((item) => {
+        if (item.id === id) {
+          // Enforce stock limit and minimum of 1
+          const newQty = Math.max(1, Math.min(quantity, item.stock));
+          return { ...item, quantity: newQty };
+        }
+        return item;
+      });
       localStorage.setItem('kimorojo_cart', JSON.stringify(newCart));
       return newCart;
     });
@@ -71,14 +90,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     localStorage.removeItem('kimorojo_cart');
   };
 
-  // FIX: Don't render children until localStorage is fully loaded
-  // This prevents Next.js from rendering an "empty" cart page prematurely
   if (!isLoaded) {
     return null;
   }
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, clearCart, cartCount }}>
+    <CartContext.Provider value={{ cart, addToCart, updateQuantity, removeFromCart, clearCart, cartCount }}>
       {children}
     </CartContext.Provider>
   );

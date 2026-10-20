@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
-import { useCart } from '@/context/CartContext'; // <-- ADDED
+import { useCart } from '@/context/CartContext';
 
 interface Category {
   id: number;
@@ -23,15 +23,22 @@ interface Collection {
 
 export default function Header() {
   const { lang, setLang, t } = useLang();
-  const { cartCount } = useCart(); // <-- ADDED
+  const { cartCount } = useCart();
   const router = useRouter();
+  const pathname = usePathname(); // Tracks URL changes
   const [isShopOpen, setIsShopOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
   const isFarsi = lang === 'fa';
   
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
+
+  // Re-checks login status every time the user navigates to a new page
+  useEffect(() => {
+    setIsLoggedIn(!!localStorage.getItem('kimorojo_user_phone'));
+  }, [pathname]);
 
   const handleMouseEnter = () => {
     if (hoverTimeout.current) {
@@ -130,7 +137,6 @@ export default function Header() {
             </nav>
             
             <div className="flex items-center gap-4 text-gray-700">
-              {/* UPDATED CART ICON WITH BADGE */}
               <Link href="/cart" className="relative hover:text-black transition-colors" aria-label={t('cart')}>
                 <ShoppingBag className="w-5 h-5" />
                 {cartCount > 0 && (
@@ -143,7 +149,12 @@ export default function Header() {
               <Link href="/favorites" className="hover:text-black transition-colors" aria-label={t('favorites')}>
                 <Heart className="w-5 h-5" />
               </Link>
-              <Link href="/account" className="hover:text-black transition-colors" aria-label={t('profile')}>
+              
+              <Link 
+                href={isLoggedIn ? "/account" : "/login"} 
+                className="hover:text-black transition-colors flex items-center gap-2" 
+                aria-label={t('profile')}
+              >
                 <User className="w-5 h-5" />
               </Link>
             </div>

@@ -4,11 +4,12 @@ import { useState, useEffect, use } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Link from 'next/link';
-import { ArrowLeft, Heart } from 'lucide-react';
+import { ArrowLeft, Heart, ZoomIn } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import AddToCartButton from '@/components/AddToCartButton';
 
-const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
+const GOLD_PRICE_PER_GRAM_TOMAN = 4500000; // Mock live price
+const TAX_RATE = 0.10; // 10% Tax
 
 interface Product {
   id: number;
@@ -20,6 +21,8 @@ interface Product {
   purity: string;
   metal_type: string;
   making_charges: number;
+  accessories_price?: number;
+  stock: number; // <-- ADDED
   images: string[] | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
   collection: { slug: string; name_en: string; name_fa: string } | null;
@@ -35,6 +38,10 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedImage, setSelectedImage] = useState(0);
+  
+  // Zoom state
+  const [scale, setScale] = useState(1);
+  const [position, setPosition] = useState({ x: 50, y: 50 }); // Default center
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,10 +82,6 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
     return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
-  const getProductPrice = (p: Product) => {
-    return (GOLD_PRICE_PER_GRAM_TOMAN * p.weight) + p.making_charges;
-  };
-
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-24 text-center" dir={isFarsi ? 'rtl' : 'ltr'}>
@@ -102,12 +105,41 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
 
   const productName = isFarsi ? product.name_fa : product.name_en;
   const productDesc = isFarsi ? product.description_fa : product.description_en;
-  const price = getProductPrice(product);
   const isFav = isFavorite(product.id);
   
   const images = product.images && product.images.length > 0 
     ? product.images.map(img => `http://127.0.0.1:8000/storage/${img}`)
     : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
+
+  // --- Pricing Calculations ---
+  const goldValue = GOLD_PRICE_PER_GRAM_TOMAN * product.weight;
+  const makingCharges = product.making_charges || 0;
+  const accessoriesPrice = product.accessories_price || 0;
+  const subtotal = goldValue + makingCharges + accessoriesPrice;
+  const taxAmount = subtotal * TAX_RATE;
+  const finalPrice = subtotal + taxAmount;
+
+  // --- Zoom Handlers ---
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Prevents page scroll while zooming the image
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newScale = Math.min(Math.max(scale + delta, 1), 3); // Min 1x, Max 3x zoom
+    setScale(newScale);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (scale > 1) {
+      const rect = e.currentTarget.getBoundingClientRect();
+      const x = ((e.clientX - rect.left) / rect.width) * 100;
+      const y = ((e.clientY - rect.top) / rect.height) * 100;
+      setPosition({ x, y });
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setScale(1);
+    setPosition({ x: 50, y: 50 });
+  };
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-12" dir={isFarsi ? 'rtl' : 'ltr'}>
@@ -117,14 +149,31 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
       </Link>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
+        
+        {/* Left: Image Gallery with Scroll Zoom */}
         <div className="space-y-4">
-          {/* FIX: Removed 'grayscale' from main image so it is always colored */}
-          <div className="aspect-square bg-gray-100 rounded-sm overflow-hidden transition-all duration-700 ease-in-out">
+          <div 
+            className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative cursor-zoom-in"
+            onWheel={handleWheel}
+            onMouseMove={handleMouseMove}
+            onMouseLeave={handleMouseLeave}
+          >
             <img 
               src={images[selectedImage]} 
               alt={productName} 
-              className="w-full h-full object-cover transition-all duration-500 hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-200 ease-out"
+              style={{ 
+                transform: `scale(${scale})`, 
+                transformOrigin: `${position.x}% ${position.y}%` 
+              }}
             />
+            {/* Zoom Indicator */}
+            {scale > 1 && (
+              <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1 pointer-events-none">
+                <ZoomIn className="w-3 h-3" />
+                {Math.round(scale * 100)}%
+              </div>
+            )}
           </div>
           
           {images.length > 1 && (
@@ -132,7 +181,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               {images.map((img, index) => (
                 <button 
                   key={index}
-                  onClick={() => setSelectedImage(index)}
+                  onClick={() => { setSelectedImage(index); setScale(1); setPosition({ x: 50, y: 50 }); }}
                   className={`flex-shrink-0 w-20 h-20 rounded-sm overflow-hidden border-2 transition-all grayscale hover:grayscale-0 ${
                     selectedImage === index ? 'border-black' : 'border-transparent hover:border-gray-300'
                   }`}
@@ -144,6 +193,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           )}
         </div>
 
+        {/* Right: Product Details & Price Breakdown */}
         <div className="flex flex-col justify-center space-y-8">
           <div>
             {product.collection && (
@@ -152,7 +202,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               </p>
             )}
             <h1 className="text-3xl md:text-4xl font-serif text-gray-900 mb-4">{productName}</h1>
-            <p className="text-2xl font-medium text-gray-900">{formatToman(price)}</p>
+            <p className="text-3xl font-bold text-[#682535]">{formatToman(finalPrice)}</p>
           </div>
 
           <p className="text-gray-600 leading-relaxed">
@@ -180,13 +230,49 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
             </div>
           </div>
 
+          {/* Price Breakdown Section */}
+          <div className="bg-gray-50 p-6 rounded-sm border border-gray-100 space-y-3">
+            <h3 className="font-medium text-gray-900 mb-3">{isFarsi ? 'جزئیات قیمت' : 'Price Breakdown'}</h3>
+            
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? 'قیمت طلای خام' : 'Raw Gold Price'}</span>
+              <span>{formatToman(goldValue)}</span>
+            </div>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? 'اجرت ساخت' : 'Making Charges'}</span>
+              <span>{formatToman(makingCharges)}</span>
+            </div>
+            {accessoriesPrice > 0 && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>{isFarsi ? 'قیمت متعلقات' : 'Accessories Price'}</span>
+                <span>{formatToman(accessoriesPrice)}</span>
+              </div>
+            )}
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? 'مالیات (۱۰٪)' : 'Tax (10%)'}</span>
+              <span>{formatToman(taxAmount)}</span>
+            </div>
+            
+            <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
+              <span className="font-bold text-gray-900">{isFarsi ? 'قیمت نهایی' : 'Total Price'}</span>
+              <span className="font-bold text-xl text-[#682535]">{formatToman(finalPrice)}</span>
+            </div>
+            
+            <p className="text-xs text-gray-400 mt-4 pt-2 border-t border-gray-200">
+              {isFarsi 
+                ? `قیمت لحظه‌ای طلا: ${formatToman(GOLD_PRICE_PER_GRAM_TOMAN).replace(' تومان', '')} / گرم` 
+                : `Live Gold Price: ${formatToman(GOLD_PRICE_PER_GRAM_TOMAN).replace(' Toman', '')} / g`}
+            </p>
+          </div>
+
           <div className="flex gap-4">
-            {/* FIX: Passed full product details to the button */}
+            {/* FIX: Added stock prop */}
             <AddToCartButton 
               productId={product.id} 
               productName={productName} 
-              productPrice={price} 
+              productPrice={finalPrice} 
               productImage={images[0]} 
+              stock={product.stock || 0} 
             />
             
             <button 
@@ -199,9 +285,18 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
               <Heart className={`w-5 h-5 ${isFav ? 'fill-current' : ''}`} />
             </button>
           </div>
+          
+          {/* Stock Indicator */}
+          <p className={`text-sm text-center ${product.stock === 0 ? 'text-red-600 font-medium' : 'text-gray-500'}`}>
+            {product.stock === 0 
+              ? (isFarsi ? 'این محصول در حال حاضر ناموجود است.' : 'This product is currently out of stock.')
+              : (isFarsi ? `فقط ${product.stock} عدد در انبار باقی مانده است.` : `Only ${product.stock} left in stock.`)
+            }
+          </p>
         </div>
       </div>
 
+      {/* Related Products */}
       {relatedProducts.length > 0 && (
         <section className="mt-24 pt-12 border-t border-gray-100">
           <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-8 text-center">
@@ -210,7 +305,14 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {relatedProducts.map((relProduct) => {
               const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
-              const relPrice = getProductPrice(relProduct);
+              
+              // Calculate related product price with tax for consistency
+              const relGoldValue = GOLD_PRICE_PER_GRAM_TOMAN * relProduct.weight;
+              const relMaking = relProduct.making_charges || 0;
+              const relAccessories = relProduct.accessories_price || 0;
+              const relSubtotal = relGoldValue + relMaking + relAccessories;
+              const relFinalPrice = relSubtotal + (relSubtotal * TAX_RATE);
+              
               const relImage = relProduct.images && relProduct.images.length > 0 
                 ? `http://127.0.0.1:8000/storage/${relProduct.images[0]}` 
                 : '';
@@ -220,7 +322,7 @@ export default function ProductPage({ params }: { params: Promise<{ id: string }
                   key={relProduct.id} 
                   id={relProduct.id} 
                   name={relName} 
-                  price={formatToman(relPrice)} 
+                  price={formatToman(relFinalPrice)} 
                   image={relImage} 
                   category={relProduct.collection?.slug || ''} 
                 />
