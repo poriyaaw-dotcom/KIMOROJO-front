@@ -132,6 +132,7 @@ export default function Header() {
                   {t('shop')}
                 </Link>
               </div>
+              <Link href="/blog" className="hover:text-black transition-colors">{isFarsi ? 'وبلاگ' : 'Blog'}</Link>
               <Link href="/contact" className="hover:text-black transition-colors">{t('contact')}</Link>
               <Link href="/about" className="hover:text-black transition-colors">{t('about')}</Link>
             </nav>

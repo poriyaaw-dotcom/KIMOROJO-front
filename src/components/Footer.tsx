@@ -44,7 +44,7 @@ export default function Footer() {
               <a href="https://instagram.com/kimorojo" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram">
                 <InstagramIcon />
               </a>
-              <a href="https://t.me" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Telegram">
+              <a href="https://t.me/KIMOROJO" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Telegram">
                 <Send className="w-5 h-5" />
               </a>
               <a href="https://wa.me/message/GNDRO2I67XSPN1" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="WhatsApp">
@@ -59,7 +59,7 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Mail className="w-4 h-4 text-gray-400" />
-                <span>info@kimorojo.com</span>
+                <span>kimorojogallery@gmail.com</span>
               </div>
               <div className="flex items-start gap-3 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
@@ -81,6 +81,7 @@ export default function Footer() {
               <li><Link href="/shop/necklaces" className="hover:text-black transition-colors">{t('necklaces') || 'Necklaces'}</Link></li>
               <li><Link href="/shop/bracelets" className="hover:text-black transition-colors">{t('bracelets') || 'Bracelets'}</Link></li>
               <li><Link href="/shop/earrings" className="hover:text-black transition-colors">{t('earrings') || 'Earrings'}</Link></li>
+              <li><Link href="/blog" className="hover:text-black transition-colors">{isFarsi ? 'وبلاگ' : 'Blog'}</Link></li>
               <li><Link href="/about" className="hover:text-black transition-colors">{t('aboutUs') || 'About Us'}</Link></li>
             </ul>
           </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Lang = 'en' | 'fa';
 
@@ -12,9 +12,24 @@ interface LangContextType {
 
 const LangContext = createContext<LangContextType | undefined>(undefined);
 
+// Helper functions to read/write cookies
+function getCookie(name: string) {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift();
+  return null;
+}
+
+function setCookie(name: string, value: string, days: number) {
+  if (typeof document === 'undefined') return;
+  const expires = new Date();
+  expires.setTime(expires.getTime() + days * 24 * 60 * 60 * 1000);
+  document.cookie = `${name}=${value};expires=${expires.toUTCString()};path=/`;
+}
+
 const translations = {
   en: {
-    // --- General & Header ---
     searchPlaceholder: "Search jewelry...",
     shop: "Shop",
     contact: "Contact Us",
@@ -25,8 +40,6 @@ const translations = {
     profile: "Profile",
     viewAll: "View All",
     home: "Home",
-    
-    // --- Categories & Mega Menu ---
     rings: "Rings",
     necklaces: "Necklaces",
     bracelets: "Bracelets",
@@ -46,8 +59,6 @@ const translations = {
     everydayEssentials: "Everyday Essentials",
     statementPieces: "Statement Pieces",
     bestSellers: "Best Sellers",
-
-    // --- Shop Page Filters & Sort ---
     sortBy: "Sort by",
     recommended: "Recommended",
     newest: "Newest",
@@ -63,8 +74,6 @@ const translations = {
     of: "of",
     previous: "Previous",
     next: "Next",
-
-    // --- Product Page ---
     size: "Size",
     addToCart: "Add to Cart",
     description: "Description",
@@ -77,8 +86,6 @@ const translations = {
     writeReview: "Write a Review",
     inStock: "In Stock",
     outOfStock: "Out of Stock",
-
-    // --- Cart Page ---
     emptyCart: "Your cart is empty",
     continueShopping: "Continue Shopping",
     orderSummary: "Order Summary",
@@ -88,8 +95,6 @@ const translations = {
     total: "Total",
     remove: "Remove",
     free: "Free",
-
-    // --- Checkout & Auth (OTP) ---
     checkout: "Checkout",
     contactInfo: "Contact Information",
     shippingAddress: "Shipping Address",
@@ -110,8 +115,6 @@ const translations = {
     resendCode: "Resend code",
     codeSentTo: "Code sent to",
     changeNumber: "Change number",
-
-    // --- User Profile / Account ---
     myAccount: "My Account",
     orderHistory: "Order History",
     myAddresses: "My Addresses",
@@ -129,13 +132,9 @@ const translations = {
     delete: "Delete",
     saveAddress: "Save Address",
     logout: "Log Out",
-
-    // --- Favorites & Search (NEW) ---
     emptyFavorites: "Your favorites list is empty",
     searchResults: "Search Results for",
     noResults: "No products found matching your search",
-
-    // --- Static Pages (NEW) ---
     aboutUs: "About Us",
     contactUs: "Contact Us",
     faq: "FAQ",
@@ -146,12 +145,9 @@ const translations = {
     name: "Name",
     message: "Message",
     askQuestion: "Ask a question",
-
-    // --- Footer ---
     footerDesc: "Exquisite handcrafted jewelry for every moment.",
     quickLinks: "Quick Links",
     customerCare: "Customer Care",
-    faq: "FAQ",
     privacy: "Privacy Policy",
     myProfile: "My Profile",
     copyright: "© 2026 KIMOROJO. All rights reserved.",
@@ -160,7 +156,6 @@ const translations = {
     enamad: "E-Namad Trust Symbol",
   },
   fa: {
-    // --- General & Header ---
     searchPlaceholder: "جستجوی جواهرات...",
     shop: "فروشگاه",
     contact: "تماس با ما",
@@ -171,8 +166,6 @@ const translations = {
     profile: "پروفایل",
     viewAll: "مشاهده همه",
     home: "خانه",
-    
-    // --- Categories & Mega Menu ---
     rings: "انگشترها",
     necklaces: "گردنبندها",
     bracelets: "دستبندها",
@@ -192,8 +185,6 @@ const translations = {
     everydayEssentials: "ضروریات روزمره",
     statementPieces: "قطعات خاص",
     bestSellers: "پرفروش‌ترین‌ها",
-
-    // --- Shop Page Filters & Sort ---
     sortBy: "مرتب‌سازی بر اساس",
     recommended: "پیشنهادی",
     newest: "جدیدترین",
@@ -209,8 +200,6 @@ const translations = {
     of: "از",
     previous: "قبلی",
     next: "بعدی",
-
-    // --- Product Page ---
     size: "سایز",
     addToCart: "افزودن به سبد خرید",
     description: "توضیحات",
@@ -223,8 +212,6 @@ const translations = {
     writeReview: "ثبت نظر",
     inStock: "موجود",
     outOfStock: "ناموجود",
-
-    // --- Cart Page ---
     emptyCart: "سبد خرید شما خالی است",
     continueShopping: "ادامه خرید",
     orderSummary: "خلاصه سفارش",
@@ -234,8 +221,6 @@ const translations = {
     total: "مجموع",
     remove: "حذف",
     free: "رایگان",
-
-    // --- Checkout & Auth (OTP) ---
     checkout: "تسویه حساب",
     contactInfo: "اطلاعات تماس",
     shippingAddress: "آدرس ارسال",
@@ -256,8 +241,6 @@ const translations = {
     resendCode: "ارسال مجدد کد",
     codeSentTo: "کد ارسال شد به",
     changeNumber: "تغییر شماره",
-
-    // --- User Profile / Account ---
     myAccount: "حساب کاربری من",
     orderHistory: "تاریخچه سفارشات",
     myAddresses: "آدرس‌های من",
@@ -275,13 +258,9 @@ const translations = {
     delete: "حذف",
     saveAddress: "ذخیره آدرس",
     logout: "خروج",
-
-    // --- Favorites & Search (NEW) ---
     emptyFavorites: "لیست علاقه‌مندی‌های شما خالی است",
     searchResults: "نتایج جستجو برای",
     noResults: "هیچ محصولی مطابق با جستجوی شما یافت نشد",
-
-    // --- Static Pages (NEW) ---
     aboutUs: "درباره ما",
     contactUs: "تماس با ما",
     faq: "سوالات متداول",
@@ -292,12 +271,9 @@ const translations = {
     name: "نام",
     message: "پیام",
     askQuestion: "سوال بپرسید",
-
-    // --- Footer ---
     footerDesc: "جواهرات دست‌ساز بی‌نظیر برای هر لحظه.",
     quickLinks: "لینک‌های سریع",
     customerCare: "خدمات مشتریان",
-    faq: "سوالات متداول",
     privacy: "حریم خصوصی",
     myProfile: "پروفایل من",
     copyright: "© ۲۰۲۶ کیموروجو. تمامی حقوق محفوظ است.",
@@ -308,7 +284,20 @@ const translations = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLang] = useState<Lang>('en');
+  const [lang, setLangState] = useState<Lang>('en');
+
+  // Load language from cookie on first render
+  useEffect(() => {
+    const savedLang = getCookie('lang') as Lang;
+    if (savedLang === 'en' || savedLang === 'fa') {
+      setLangState(savedLang);
+    }
+  }, []);
+
+  const setLang = (newLang: Lang) => {
+    setLangState(newLang);
+    setCookie('lang', newLang, 365); // Save to cookie for 1 year
+  };
 
   const t = (key: string) => {
     return translations[lang][key as keyof typeof translations.en] || key;
