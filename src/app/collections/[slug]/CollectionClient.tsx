@@ -1,18 +1,22 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
-import Link from 'next/link';
+import { calculateProductPrice } from '@/utils/calculatePrice';
 
 interface Product {
   id: number;
   name_en: string;
   name_fa: string;
-  weight: number;
+  weight: number | string;
   purity: string;
   metal_type: string;
-  making_charges: number;
+  making_charges: number | string;
+  accessories_price?: number | string;
+  accessories_making_charges?: number | string;
+  accessories_profit?: number | string;
+  apply_tax_on_accessories?: boolean | number;
   images: string[] | null;
   collection: { slug: string; name_en: string; name_fa: string } | null;
 }
@@ -39,12 +43,12 @@ export default function CollectionClient({
 
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
-    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
-  const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
+  // --- USE CENTRALIZED PRICING FUNCTION ---
   const getProductPrice = (product: Product) => {
-    return (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+    return calculateProductPrice(product);
   };
 
   const collectionName = isFarsi ? collection.name_fa : collection.name_en;
@@ -62,7 +66,13 @@ export default function CollectionClient({
           />
         )}
         <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-          <h1 className="text-4xl md:text-6xl font-serif text-white text-center tracking-widest uppercase">
+          <h1 
+            className={`text-4xl md:text-6xl text-white text-center ${
+              isFarsi 
+                ? 'font-bold' 
+                : 'font-serif tracking-widest uppercase' 
+            }`}
+          >
             {collectionName}
           </h1>
         </div>

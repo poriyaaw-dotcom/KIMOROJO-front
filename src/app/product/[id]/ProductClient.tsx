@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { ArrowLeft, Heart, ZoomIn } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import AddToCartButton from '@/components/AddToCartButton';
+import { calculateProductPrice, PricingSettings } from '@/utils/calculatePrice';
 
 interface Product {
   id: number;
@@ -14,11 +15,14 @@ interface Product {
   name_fa: string;
   description_en: string;
   description_fa: string;
-  weight: number;
+  weight: number | string;
   purity: string;
   metal_type: string;
-  making_charges: number;
-  accessories_price?: number;
+  making_charges: number | string;
+  accessories_price?: number | string;
+  accessories_making_charges?: number | string;
+  accessories_profit?: number | string;
+  apply_tax_on_accessories?: boolean | number;
   stock: number;
   images: string[] | null;
   slug: string;
@@ -26,13 +30,6 @@ interface Product {
   meta_description: string | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
   collection: { slug: string; name_en: string; name_fa: string } | null;
-}
-
-interface PricingSettings {
-  gold_price: number;
-  silver_price: number;
-  seller_profit: number;
-  tax_rate: number;
 }
 
 export default function ProductClient({ 
@@ -65,28 +62,49 @@ export default function ProductClient({
     ? product.images.map(img => `http://127.0.0.1:8000/storage/${img}`)
     : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
 
-  // --- PRICING FORMULAS ---
-  let finalPrice = 0;
-  let breakdown: any = null;
+  // --- USE CENTRALIZED PRICING FUNCTION ---
+  const finalPrice = calculateProductPrice(product, settings);
 
-  const P = product.metal_type === 'silver' ? settings.silver_price : settings.gold_price;
-  const B = parseFloat(settings.seller_profit);
-  const W = product.making_charges; 
-  const T = parseFloat(settings.tax_rate);
-  const M = product.weight;
-  const C = product.accessories_price || 0;
+  // Breakdown calculation for UI display
+  const P = product.metal_type === 'silver' 
+    ? (Number(settings.silver_price) || 4900000) 
+    : (Number(settings.gold_price) || 26000000);
+  const B = Number(settings.seller_profit) || 0.07;
+  const T = Number(settings.tax_rate) || 0.10;
+  const M = Number(product.weight) || 0;
+  const W_percent = Number(product.making_charges || 0) / 100;
+  const accBase = Number(product.accessories_price || 0);
+  const accMakingPercent = Number(product.accessories_making_charges || 0) / 100;
+  const accProfitPercent = Number(product.accessories_profit || 0) / 100;
+  const applyTax = Boolean(product.apply_tax_on_accessories);
 
-  if (product.metal_type === 'silver') {
-    finalPrice = (P * M) + C;
-    breakdown = { isSilver: true, silverValue: P * M, C };
+  const baseMetalValue = P * M;
+  const metalMakingCharges = baseMetalValue * W_percent;
+  const accMakingCharges = accBase * accMakingPercent;
+  const totalMakingCharges = metalMakingCharges + accMakingCharges;
+  const metalProfit = (baseMetalValue + metalMakingCharges) * B;
+  const accProfit = (accBase + accMakingCharges) * accProfitPercent;
+  const totalProfit = metalProfit + accProfit;
+
+  let vatTotal = 0;
+  if (applyTax) {
+    vatTotal = (totalMakingCharges + totalProfit + accBase) * T;
   } else {
-    const X = P * B;
-    const Y = P * W;
-    const Z = T * (X + Y);
-    const RESULT = M * (X + Y + Z);
-    finalPrice = RESULT + C;
-    breakdown = { isSilver: false, P, B, W, T, M, C, X, Y, Z, RESULT };
+    vatTotal = (metalMakingCharges + metalProfit) * T;
   }
+
+  const breakdown = { 
+    isSilver: product.metal_type === 'silver',
+    baseMetalValue,
+    accBase,
+    totalMakingCharges,
+    totalProfit,
+    vatTotal,
+    W: Number(product.making_charges || 0),
+    B,
+    T,
+    applyTax
+  };
 
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -109,7 +127,6 @@ export default function ProductClient({
     setPosition({ x: 50, y: 50 });
   };
 
-  // Mock last updated time (replace with real API data later)
   const lastUpdated = new Date();
   const formattedTime = isFarsi 
     ? lastUpdated.toLocaleTimeString('fa-IR', { hour: '2-digit', minute: '2-digit' })
@@ -196,7 +213,6 @@ export default function ProductClient({
             </div>
           </div>
 
-          {/* UPDATED: Added Last Updated timestamp */}
           <div className="text-center md:text-start p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
             <div className="flex items-center justify-between gap-4">
               {product.metal_type === 'silver' ? (
@@ -221,43 +237,37 @@ export default function ProductClient({
             </div>
           </div>
 
+          {/* SIMPLIFIED PRICE BREAKDOWN */}
           <div className="bg-gray-50 p-6 rounded-sm border border-gray-100 space-y-3">
             <h3 className="font-medium text-gray-900 mb-3">{isFarsi ? 'جزئیات قیمت' : 'Price Breakdown'}</h3>
             
-            {breakdown.isSilver ? (
-              <>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{isFarsi ? 'ارزش نقره' : 'Silver Value'}</span>
-                  <span>{formatToman(breakdown.silverValue)}</span>
-                </div>
-                {breakdown.C > 0 && (
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>{isFarsi ? 'قیمت متعلقات' : 'Accessories Price'}</span>
-                    <span>{formatToman(breakdown.C)}</span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{isFarsi ? 'سود فروشنده' : 'Seller Profit'} ({(breakdown.B * 100).toFixed(0)}%)</span>
-                  <span>{formatToman(breakdown.X * breakdown.M)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{isFarsi ? 'اجرت ساخت' : 'Making Charges'} ({(breakdown.W * 100).toFixed(0)}%)</span>
-                  <span>{formatToman(breakdown.Y * breakdown.M)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-gray-600">
-                  <span>{isFarsi ? 'مالیات' : 'Tax'} ({(breakdown.T * 100).toFixed(0)}%)</span>
-                  <span>{formatToman(breakdown.Z * breakdown.M)}</span>
-                </div>
-                {breakdown.C > 0 && (
-                  <div className="flex justify-between text-sm text-gray-600">
-                    <span>{isFarsi ? 'قیمت متعلقات' : 'Accessories Price'}</span>
-                    <span>{formatToman(breakdown.C)}</span>
-                  </div>
-                )}
-              </>
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? (breakdown.isSilver ? 'ارزش نقره' : 'ارزش طلا') : (breakdown.isSilver ? 'Silver Value' : 'Gold Value')}</span>
+              <span>{formatToman(breakdown.baseMetalValue)}</span>
+            </div>
+            
+            {breakdown.accBase > 0 && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>{isFarsi ? 'متعلقات' : 'Accessories'}</span>
+                <span>{formatToman(breakdown.accBase)}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? 'اجرت ساخت' : 'Making Charges'} ({breakdown.W}%)</span>
+              <span>{formatToman(breakdown.totalMakingCharges)}</span>
+            </div>
+            
+            <div className="flex justify-between text-sm text-gray-600">
+              <span>{isFarsi ? 'سود فروشنده' : 'Seller Profit'} ({(breakdown.B * 100).toFixed(0)}%)</span>
+              <span>{formatToman(breakdown.totalProfit)}</span>
+            </div>
+            
+            {breakdown.applyTax && (
+              <div className="flex justify-between text-sm text-gray-600">
+                <span>{isFarsi ? 'مالیات بر ارزش افزوده' : 'VAT'} ({(breakdown.T * 100).toFixed(0)}%)</span>
+                <span>{formatToman(breakdown.vatTotal)}</span>
+              </div>
             )}
             
             <div className="border-t border-gray-200 pt-3 mt-3 flex justify-between items-center">
@@ -303,22 +313,7 @@ export default function ProductClient({
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-6 gap-y-12">
             {relatedProducts.map((relProduct) => {
               const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
-              const relP = relProduct.metal_type === 'silver' ? settings.silver_price : settings.gold_price;
-              const relB = parseFloat(settings.seller_profit);
-              const relW = relProduct.making_charges;
-              const relT = parseFloat(settings.tax_rate);
-              const relM = relProduct.weight;
-              const relC = relProduct.accessories_price || 0;
-              
-              let relFinalPrice = 0;
-              if (relProduct.metal_type === 'silver') {
-                relFinalPrice = (relP * relM) + relC;
-              } else {
-                const relX = relP * relB;
-                const relY = relP * relW;
-                const relZ = relT * (relX + relY);
-                relFinalPrice = (relM * (relX + relY + relZ)) + relC;
-              }
+              const relFinalPrice = calculateProductPrice(relProduct, settings);
               
               const relImage = relProduct.images && relProduct.images.length > 0 
                 ? `http://127.0.0.1:8000/storage/${relProduct.images[0]}` 

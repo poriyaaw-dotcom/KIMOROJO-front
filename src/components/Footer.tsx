@@ -83,6 +83,7 @@ export default function Footer() {
               <li><Link href="/shop/earrings" className="hover:text-black transition-colors">{t('earrings') || 'Earrings'}</Link></li>
               <li><Link href="/blog" className="hover:text-black transition-colors">{isFarsi ? 'وبلاگ' : 'Blog'}</Link></li>
               <li><Link href="/about" className="hover:text-black transition-colors">{t('aboutUs') || 'About Us'}</Link></li>
+              <li><Link href="/custom-order" className="hover:text-black transition-colors">{isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}</Link></li>
             </ul>
           </div>
 

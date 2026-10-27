@@ -5,18 +5,20 @@ import { useLang } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 import { Minus, Plus, Trash2, ShoppingBag, AlertTriangle } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
-const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
-const TAX_RATE = 0.10;
+import { calculateProductPrice } from '@/utils/calculatePrice';
 
 interface CartItem {
   id: number;
   name_en: string;
   name_fa: string;
-  weight: number;
+  weight: number | string;
   purity: string;
-  making_charges: number;
-  accessories_price?: number;
+  metal_type: string;
+  making_charges: number | string;
+  accessories_price?: number | string;
+  accessories_making_charges?: number | string;
+  accessories_profit?: number | string;
+  apply_tax_on_accessories?: boolean | number;
   stock: number;
   images: string[] | null;
   quantity: number;
@@ -68,18 +70,19 @@ export default function CartPage() {
 
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
-    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
+  // Use centralized pricing function
   const getItemPrice = (item: CartItem) => {
-    const goldValue = GOLD_PRICE_PER_GRAM_TOMAN * item.weight;
-    const makingCharges = item.making_charges || 0;
-    const accessoriesPrice = item.accessories_price || 0;
-    const subtotalItem = goldValue + makingCharges + accessoriesPrice;
-    return subtotalItem + (subtotalItem * TAX_RATE);
+    return calculateProductPrice(item);
   };
 
-  const subtotal = fullCartItems.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
+  const subtotal = fullCartItems.reduce((sum, item) => {
+    const price = getItemPrice(item);
+    return sum + (price * item.quantity);
+  }, 0);
+
   const shipping = subtotal > 5000000 ? 0 : 150000;
   const total = subtotal + shipping;
 

@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
-import { Phone, ShieldCheck } from 'lucide-react';
-import { useState } from 'react';
+import { Phone, ShieldCheck, AlertCircle, Clock } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function LoginPage() {
@@ -14,34 +14,125 @@ export default function LoginPage() {
   const [step, setStep] = useState(1);
   const [loginPhone, setLoginPhone] = useState('');
   const [otpCode, setOtpCode] = useState('');
+  const [phoneError, setPhoneError] = useState('');
+  
+  // OTP Security States
+  const [timeLeft, setTimeLeft] = useState(60);
+  const [wrongAttempts, setWrongAttempts] = useState(0);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockTimeLeft, setLockTimeLeft] = useState(0);
 
-  // Convert Farsi/Arabic numbers to English
+  // Load lock status on mount (persists across refreshes)
+  useEffect(() => {
+    const lockUntil = localStorage.getItem('otp_lock_until');
+    const attempts = parseInt(localStorage.getItem('otp_wrong_attempts') || '0', 10);
+    
+    if (lockUntil && Date.now() < parseInt(lockUntil, 10)) {
+      setIsLocked(true);
+      setLockTimeLeft(Math.ceil((parseInt(lockUntil, 10) - Date.now()) / 1000));
+      setWrongAttempts(attempts);
+    } else {
+      localStorage.removeItem('otp_lock_until');
+      localStorage.setItem('otp_wrong_attempts', '0');
+    }
+  }, []);
+
+  // Countdown timers
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    
+    if (timeLeft > 0 && !isLocked && step === 2) {
+      interval = setInterval(() => setTimeLeft((prev) => prev - 1), 1000);
+    }
+    
+    if (lockTimeLeft > 0 && isLocked) {
+      interval = setInterval(() => {
+        setLockTimeLeft((prev) => {
+          if (prev <= 1) {
+            setIsLocked(false);
+            setWrongAttempts(0);
+            localStorage.removeItem('otp_lock_until');
+            localStorage.setItem('otp_wrong_attempts', '0');
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    
+    return () => clearInterval(interval);
+  }, [timeLeft, lockTimeLeft, isLocked, step]);
+
   const normalizePhone = (phone: string) => {
     return phone
       .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1728))
-      .replace(/[٠-]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1584));
+      .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1584))
+      .replace(/[\s\-]/g, '');
+  };
+
+  const isValidIranianPhone = (phone: string) => {
+    const regex = /^(\+98|0)9\d{9}$/;
+    return regex.test(phone);
   };
 
   const handlePhoneSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const normalizedPhone = normalizePhone(loginPhone);
-    if (normalizedPhone.length > 5) {
-      setLoginPhone(normalizedPhone);
-      setStep(2);
+    
+    if (!isValidIranianPhone(normalizedPhone)) {
+      setPhoneError(isFarsi ? 'شماره تلفن معتبر نیست. فرمت صحیح: 09123456789 یا +989123456789' : 'Invalid phone number. Format: 09123456789 or +989123456789');
+      return;
     }
+
+    setPhoneError('');
+    setLoginPhone(normalizedPhone);
+    setStep(2);
+    setTimeLeft(60); // Reset resend timer on new phone entry
   };
 
   const handleOtpSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (isLocked) return;
+
     if (otpCode === "12345") {
+      // Success: Clear all OTP security data
+      localStorage.removeItem('otp_lock_until');
+      localStorage.removeItem('otp_wrong_attempts');
+      
       localStorage.setItem('kimorojo_user_phone', loginPhone);
-      // Redirect to checkout or account
       const redirectUrl = localStorage.getItem('redirect_after_login') || '/account';
       localStorage.removeItem('redirect_after_login');
       router.push(redirectUrl);
     } else {
-      alert(isFarsi ? "کد تایید اشتباه است. برای تست از 12345 استفاده کنید." : "Invalid OTP. For testing, use 12345.");
+      const newAttempts = wrongAttempts + 1;
+      setWrongAttempts(newAttempts);
+      localStorage.setItem('otp_wrong_attempts', newAttempts.toString());
+
+      if (newAttempts >= 5) {
+        const lockUntil = Date.now() + 15 * 60 * 1000; // 15 minutes lockout
+        setIsLocked(true);
+        setLockTimeLeft(15 * 60);
+        localStorage.setItem('otp_lock_until', lockUntil.toString());
+        alert(isFarsi ? "تعداد تلاش‌های ناموفق زیاد است. ورود به مدت ۱۵ دقیقه قفل شد." : "Too many failed attempts. Login locked for 15 minutes.");
+      } else {
+        alert(isFarsi ? `کد تایید اشتباه است. ${5 - newAttempts} تلاش دیگر باقی مانده است.` : `Invalid OTP. ${5 - newAttempts} attempts remaining.`);
+      }
+      setOtpCode(''); // Clear input for retry
     }
+  };
+
+  const handleResend = () => {
+    if (timeLeft === 0 && !isLocked) {
+      setTimeLeft(60);
+      // TODO: Later, trigger backend API to resend real OTP here
+      alert(isFarsi ? "کد جدید ارسال شد." : "New code sent.");
+    }
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -60,12 +151,23 @@ export default function LoginPage() {
             <input 
               type="tel" 
               value={loginPhone} 
-              onChange={(e) => setLoginPhone(e.target.value)}
-              placeholder="+98 912 345 6789" 
+              onChange={(e) => {
+                setLoginPhone(e.target.value);
+                if (phoneError) setPhoneError('');
+              }}
+              placeholder="09123456789" 
               dir="ltr"
-              className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-black transition-all text-center text-lg tracking-wider" 
+              className={`w-full px-4 py-3 border rounded-sm focus:outline-none focus:ring-1 transition-all text-center text-lg tracking-wider ${
+                phoneError ? 'border-red-500 focus:ring-red-500' : 'border-gray-200 focus:ring-black'
+              }`} 
               required
             />
+            {phoneError && (
+              <div className="flex items-center gap-2 text-red-600 text-sm justify-center bg-red-50 p-2 rounded">
+                <AlertCircle className="w-4 h-4" />
+                <span>{phoneError}</span>
+              </div>
+            )}
             <button 
               type="submit" 
               className="w-full bg-black text-white font-medium tracking-widest uppercase py-4 rounded-sm hover:bg-gray-800 transition-colors"
@@ -80,9 +182,16 @@ export default function LoginPage() {
           <p className="text-sm text-gray-500 mb-2">{t('enterOtp') || 'Enter the verification code'}</p>
           <p className="text-sm text-gray-400 mb-2 dir-ltr">{t('codeSentTo') || 'Code sent to'} <span className="text-gray-700 font-medium">{loginPhone}</span></p>
           
-          <p className="text-xs text-amber-700 mb-6 font-medium bg-amber-50 py-2 px-3 rounded inline-block border border-amber-200">
-            {isFarsi ? '💡 کد تست: 12345' : '💡 Test OTP Code: 12345'}
-          </p>
+          {isLocked ? (
+            <div className="flex items-center justify-center gap-2 text-red-600 text-sm mb-6 bg-red-50 py-3 px-4 rounded border border-red-200">
+              <Clock className="w-4 h-4" />
+              <span>{isFarsi ? `حساب قفل است. لطفاً ${formatTime(lockTimeLeft)} دیگر صبر کنید.` : `Account locked. Please wait ${formatTime(lockTimeLeft)}.`}</span>
+            </div>
+          ) : (
+            <p className="text-xs text-amber-700 mb-6 font-medium bg-amber-50 py-2 px-3 rounded inline-block border border-amber-200">
+              {isFarsi ? '💡 کد تست: 12345' : '💡 Test OTP Code: 12345'}
+            </p>
+          )}
 
           <form onSubmit={handleOtpSubmit} className="space-y-6">
             <input 
@@ -92,18 +201,47 @@ export default function LoginPage() {
               placeholder="• • • • •" 
               dir="ltr" 
               maxLength={5}
-              className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-black transition-all text-center text-2xl tracking-[0.5em] font-medium" 
+              disabled={isLocked}
+              className={`w-full px-4 py-3 border rounded-sm focus:outline-none focus:ring-1 transition-all text-center text-2xl tracking-[0.5em] font-medium ${
+                isLocked ? 'bg-gray-100 text-gray-400 cursor-not-allowed border-gray-200' : 'border-gray-200 focus:ring-black'
+              }`} 
               required
             />
             <button 
               type="submit" 
-              className="w-full bg-black text-white font-medium tracking-widest uppercase py-4 rounded-sm hover:bg-gray-800 transition-colors"
+              disabled={isLocked}
+              className={`w-full font-medium tracking-widest uppercase py-4 rounded-sm transition-colors ${
+                isLocked 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-black text-white hover:bg-gray-800'
+              }`}
             >
-              {t('verify') || 'Verify'}
+              {isLocked ? (isFarsi ? 'قفل شده' : 'Locked') : (t('verify') || 'Verify')}
             </button>
           </form>
-          <div className="mt-6">
-            <button onClick={() => setStep(1)} className="text-xs text-gray-400 hover:text-black transition-colors">{t('changeNumber') || 'Change Number'}</button>
+
+          <div className="mt-6 flex flex-col items-center gap-3">
+            <button 
+              onClick={() => { setStep(1); setPhoneError(''); }} 
+              className="text-xs text-gray-400 hover:text-black transition-colors"
+            >
+              {t('changeNumber') || 'Change Number'}
+            </button>
+            
+            <button
+              onClick={handleResend}
+              disabled={timeLeft > 0 || isLocked}
+              className={`text-sm font-medium transition-colors ${
+                timeLeft > 0 || isLocked 
+                  ? 'text-gray-400 cursor-not-allowed' 
+                  : 'text-[#682535] hover:underline'
+              }`}
+            >
+              {timeLeft > 0 
+                ? (isFarsi ? `ارسال مجدد کد (${formatTime(timeLeft)})` : `Resend code (${formatTime(timeLeft)})`)
+                : (isFarsi ? 'ارسال مجدد کد' : 'Resend code')
+              }
+            </button>
           </div>
         </>
       )}

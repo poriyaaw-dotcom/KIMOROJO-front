@@ -4,15 +4,20 @@ import { useState, useEffect } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
 import { ChevronDown } from 'lucide-react';
+import { calculateProductPrice } from '@/utils/calculatePrice';
 
 interface Product {
   id: number;
   name_en: string;
   name_fa: string;
-  weight: number;
+  weight: number | string;
   purity: string;
   metal_type: string;
-  making_charges: number;
+  making_charges: number | string;
+  accessories_price?: number | string;
+  accessories_making_charges?: number | string;
+  accessories_profit?: number | string;
+  apply_tax_on_accessories?: boolean | number;
   images: string[] | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
@@ -59,9 +64,9 @@ export default function ShopClient({
     return categoryMatch && metalMatch;
   });
 
-  const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
+  // --- USE CENTRALIZED PRICING FUNCTION ---
   const getProductPrice = (product: Product) => {
-    return (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+    return calculateProductPrice(product);
   };
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -81,7 +86,7 @@ export default function ShopClient({
 
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
-    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   const sortOptions = [

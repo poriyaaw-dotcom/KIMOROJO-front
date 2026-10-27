@@ -46,33 +46,32 @@ export default function CollectionsGrid() {
 
   return (
     <section className="max-w-7xl mx-auto px-6 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
-      {/* Main Heading */}
       <h2 className={`text-3xl md:text-4xl text-center mb-12 text-gray-900 ${isFarsi ? 'font-normal' : 'font-serif uppercase tracking-widest'}`}>
         {t('collections')}
       </h2>
       
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+      {/* CHANGED: Now strictly 1 column on mobile, 2 columns on desktop for bigger images */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {collections.map((collection) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
           const image = collection.image 
             ? `http://127.0.0.1:8000/storage/${collection.image}`
-            : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=600&q=80";
+            : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80";
 
           return (
             <Link 
               href={`/collections/${collection.slug}`} 
               key={collection.id}
-              className="group relative aspect-square overflow-hidden rounded-sm cursor-pointer"
+              className="group relative aspect-[4/3] overflow-hidden rounded-sm cursor-pointer"
             >
               <img 
                 src={image} 
                 alt={name} 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-110"
+                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-105"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-3 text-center transition-all duration-300 group-hover:bg-black/80">
-                {/* FIX: font-normal for Farsi, forced uppercase for English */}
+              <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-4 text-center transition-all duration-300 group-hover:bg-black/80">
                 <span 
-                  className={`text-white text-sm md:text-base ${isFarsi ? 'font-normal' : 'font-serif tracking-widest'}`}
+                  className={`text-white text-xl md:text-2xl ${isFarsi ? 'font-normal' : 'font-serif tracking-widest'}`}
                   style={{ textTransform: isFarsi ? 'none' : 'uppercase' }}
                 >
                   {name}

@@ -1,6 +1,9 @@
-@import "tailwindcss";
+/* Tailwind CSS v3 Directives */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-/* 1. Declare the fonts manually using standard CSS */
+/* 1. Declare the fonts manually */
 @font-face {
   font-family: 'BYekan Main';
   src: url('/fonts/BYekan-Regular.ttf') format('truetype');
@@ -17,55 +20,43 @@
   font-display: swap;
 }
 
-/* 2. Tell Tailwind to use these fonts */
-@theme {
-  --font-sans: 'BYekan Main', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
-  --font-bold: 'BYekan Bold', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif;
-  --font-serif: var(--font-playfair), ui-serif, Georgia, serif;
+/* 2. Apply fonts and base styles */
+@layer base {
+  body {
+    font-family: 'BYekan Main', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif !important;
+    background-color: white;
+    color: #111827;
+  }
+  
+  html[lang="fa"] body {
+    font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
+  }
 }
 
-/* 3. Force the font on the body */
-body {
-  font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
-  background-color: white;
-  color: #111827;
-}
-
-html[lang="fa"] body {
-  font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
-}
-
-/* Hide scrollbar for Chrome, Safari and Opera */
+/* 3. Custom Scrollbar Utilities */
 .scrollbar-hide::-webkit-scrollbar {
-    display: none;
+  display: none;
 }
-
-/* Hide scrollbar for IE, Edge and Firefox */
 .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
 
-/* Elegant Custom Scrollbar for Sliders */
 .elegant-scrollbar::-webkit-scrollbar {
   height: 4px;
 }
-
 .elegant-scrollbar::-webkit-scrollbar-track {
   background: #f3f4f6;
   border-radius: 9999px;
   margin: 0 1rem;
 }
-
 .elegant-scrollbar::-webkit-scrollbar-thumb {
   background: #d1d5db;
   border-radius: 9999px;
 }
-
 .elegant-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #9ca3af;
 }
-
 .elegant-scrollbar {
   scrollbar-width: thin;
   scrollbar-color: #d1d5db #f3f4f6;
