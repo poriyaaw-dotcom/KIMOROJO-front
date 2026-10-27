@@ -1,4 +1,3 @@
-/* Tailwind CSS v3 Directives */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -20,44 +19,24 @@
   font-display: swap;
 }
 
-/* 2. Apply fonts and base styles */
+/* 2. NUCLEAR OPTION: Force BYekan on EVERYTHING */
 @layer base {
-  body {
+  *, *::before, *::after {
     font-family: 'BYekan Main', 'Vazirmatn', ui-sans-serif, system-ui, sans-serif !important;
-    background-color: white;
-    color: #111827;
   }
   
-  html[lang="fa"] body {
-    font-family: 'BYekan Main', 'Vazirmatn', sans-serif !important;
+  body {
+    background-color: white;
+    color: #111827;
   }
 }
 
 /* 3. Custom Scrollbar Utilities */
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
-}
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
-.elegant-scrollbar::-webkit-scrollbar {
-  height: 4px;
-}
-.elegant-scrollbar::-webkit-scrollbar-track {
-  background: #f3f4f6;
-  border-radius: 9999px;
-  margin: 0 1rem;
-}
-.elegant-scrollbar::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 9999px;
-}
-.elegant-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
-}
-.elegant-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #d1d5db #f3f4f6;
-}
+.elegant-scrollbar::-webkit-scrollbar { height: 4px; }
+.elegant-scrollbar::-webkit-scrollbar-track { background: #f3f4f6; border-radius: 9999px; margin: 0 1rem; }
+.elegant-scrollbar::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 9999px; }
+.elegant-scrollbar::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+.elegant-scrollbar { scrollbar-width: thin; scrollbar-color: #d1d5db #f3f4f6; }
