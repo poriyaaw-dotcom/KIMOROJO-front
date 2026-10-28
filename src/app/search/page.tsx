@@ -4,9 +4,7 @@ import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
-import Link from 'next/link';
-
-const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
+import { calculateProductPrice } from '@/utils/calculatePrice'; // ADDED
 
 interface Product {
   id: number;
@@ -29,6 +27,15 @@ export default function SearchPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // --- FETCH SETTINGS FROM ADMIN PANEL ---
+  const [settings, setSettings] = useState<any>(null);
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/settings')
+      .then(res => res.json())
+      .then(data => setSettings(data.data || data))
+      .catch(err => console.error("Failed to fetch settings", err));
+  }, []);
+
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -50,14 +57,15 @@ export default function SearchPage() {
     fetchProducts();
   }, [query]);
 
-  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
     return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
+  // --- USE CENTRALIZED PRICING FUNCTION WITH SETTINGS ---
   const getProductPrice = (product: Product) => {
-    return (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+    if (!settings) return 0;
+    return calculateProductPrice(product, settings);
   };
 
   return (

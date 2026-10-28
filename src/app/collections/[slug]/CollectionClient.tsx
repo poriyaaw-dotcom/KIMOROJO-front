@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
 import { calculateProductPrice } from '@/utils/calculatePrice';
@@ -41,14 +41,24 @@ export default function CollectionClient({
   
   const [products] = useState<Product[]>(initialProducts);
 
+  // --- FETCH SETTINGS FROM ADMIN PANEL ---
+  const [settings, setSettings] = useState<any>(null);
+  useEffect(() => {
+    fetch('http://127.0.0.1:8000/api/settings')
+      .then(res => res.json())
+      .then(data => setSettings(data.data || data))
+      .catch(err => console.error("Failed to fetch settings", err));
+  }, []);
+
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
     return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
-  // --- USE CENTRALIZED PRICING FUNCTION ---
+  // --- USE CENTRALIZED PRICING FUNCTION WITH SETTINGS ---
   const getProductPrice = (product: Product) => {
-    return calculateProductPrice(product);
+    if (!settings) return 0;
+    return calculateProductPrice(product, settings);
   };
 
   const collectionName = isFarsi ? collection.name_fa : collection.name_en;
@@ -56,7 +66,6 @@ export default function CollectionClient({
 
   return (
     <div dir={isFarsi ? 'rtl' : 'ltr'}>
-      {/* Collection Hero Banner */}
       <section className="relative w-full h-[50vh] overflow-hidden bg-gray-100">
         {collectionImage && (
           <img 
@@ -78,7 +87,6 @@ export default function CollectionClient({
         </div>
       </section>
 
-      {/* Products Grid */}
       <div className="max-w-7xl mx-auto px-6 py-16">
         {products.length === 0 ? (
           <div className="text-center py-20 text-gray-500">

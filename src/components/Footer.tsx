@@ -20,7 +20,6 @@ const WhatsAppIcon = () => (
 export default function Footer() {
   const { t, lang } = useLang();
   const isFarsi = lang === 'fa';
-  
   const [currentYear, setCurrentYear] = useState(2026);
 
   useEffect(() => {
@@ -30,28 +29,16 @@ export default function Footer() {
   return (
     <footer className="bg-gray-50 border-t border-gray-100 pt-16 pb-8" dir={isFarsi ? 'rtl' : 'ltr'}>
       <div className="max-w-7xl mx-auto px-6">
-        
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          
-          {/* Column 1: Logo, Social Media, Contact Info */}
           <div className="space-y-4">
             <Link href="/" className="flex justify-center md:justify-start">
               <img src="/images/logo.png" alt="KIMOROJO" className="h-32 w-auto object-contain" />
             </Link>
-            
-            {/* Social Media Links */}
             <div className="flex gap-4 pt-2 justify-center md:justify-start">
-              <a href="https://instagram.com/kimorojo" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram">
-                <InstagramIcon />
-              </a>
-              <a href="https://t.me/KIMOROJO" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Telegram">
-                <Send className="w-5 h-5" />
-              </a>
-              <a href="https://wa.me/message/GNDRO2I67XSPN1" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="WhatsApp">
-                <WhatsAppIcon />
-              </a>
+              <a href="https://instagram.com/kimorojo" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Instagram"><InstagramIcon /></a>
+              <a href="https://t.me/KIMOROJO" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="Telegram"><Send className="w-5 h-5" /></a>
+              <a href="https://wa.me/message/GNDRO2I67XSPN1" target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-black transition-colors" aria-label="WhatsApp"><WhatsAppIcon /></a>
             </div>
-            
             <div className="space-y-3 pt-4">
               <div className="flex items-center gap-3 text-sm text-gray-600">
                 <Phone className="w-4 h-4 text-gray-400" />
@@ -63,16 +50,11 @@ export default function Footer() {
               </div>
               <div className="flex items-start gap-3 text-sm text-gray-600">
                 <MapPin className="w-4 h-4 text-gray-400 mt-0.5" />
-                <span>
-                  {isFarsi 
-                    ? 'تهران، بازار بزرگ، ۱۵ خرداد' 
-                    : 'Tehran, Grand Bazaar, 15th Khordad St.'}
-                </span>
+                <span>{isFarsi ? 'تهران، بازار بزرگ، ۱۵ خرداد' : 'Tehran, Grand Bazaar, 15th Khordad St.'}</span>
               </div>
             </div>
           </div>
 
-          {/* Column 2: Quick Links */}
           <div>
             <h3 className="font-serif text-lg text-black mb-6">{t('quickLinks') || 'Quick Links'}</h3>
             <ul className="space-y-3 text-sm text-gray-600">
@@ -83,43 +65,31 @@ export default function Footer() {
               <li><Link href="/shop/earrings" className="hover:text-black transition-colors">{t('earrings') || 'Earrings'}</Link></li>
               <li><Link href="/blog" className="hover:text-black transition-colors">{isFarsi ? 'وبلاگ' : 'Blog'}</Link></li>
               <li><Link href="/about" className="hover:text-black transition-colors">{t('aboutUs') || 'About Us'}</Link></li>
-              <li><Link href="/custom-order" className="hover:text-black transition-colors">{isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}</Link></li>
             </ul>
           </div>
 
-          {/* Column 3: Customer Service */}
           <div>
-            <h3 className="font-serif text-lg text-black mb-6">
-              {isFarsi ? 'خدمات مشتریان' : 'Customer Service'}
-            </h3>
+            <h3 className="font-serif text-lg text-black mb-6">{isFarsi ? 'خدمات مشتریان' : 'Customer Service'}</h3>
             <ul className="space-y-3 text-sm text-gray-600">
+              <li><Link href="/account" className="hover:text-black transition-colors">{isFarsi ? 'حساب کاربری' : 'My Account'}</Link></li>
+              <li><Link href="/custom-order" className="hover:text-black transition-colors">{isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}</Link></li>
               <li><Link href="/contact" className="hover:text-black transition-colors">{isFarsi ? 'تماس با ما' : 'Contact Us'}</Link></li>
               <li><Link href="/faq" className="hover:text-black transition-colors">{isFarsi ? 'سوالات متداول' : 'FAQ'}</Link></li>
             </ul>
           </div>
 
-          {/* Column 4: E-Namad Image */}
           <div className="flex flex-col items-center md:items-start">
-            <img 
-              src="/images/enamad.png" 
-              alt="E-Namad Trust Symbol" 
-              className="w-32 h-auto object-contain"
-            />
+            <img src="/images/enamad.png" alt="E-Namad Trust Symbol" className="w-32 h-auto object-contain" />
           </div>
         </div>
 
-        {/* Bottom Bar */}
         <div className="border-t border-gray-200 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
           <p className="text-xs text-gray-500">© {currentYear} KIMOROJO. {isFarsi ? 'تمامی حقوق محفوظ است.' : 'All rights reserved.'}</p>
-
           <p className="text-xs text-gray-400 flex items-center gap-1">
             {isFarsi ? 'طراحی و توسعه توسط' : 'Designed & Developed by'}{' '}
-            <a href="https://aresgroup.ir" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black font-medium underline underline-offset-2 transition-colors">
-              Ares Group
-            </a>
+            <a href="https://aresgroup.ir" target="_blank" rel="noopener noreferrer" className="text-gray-600 hover:text-black font-medium underline underline-offset-2 transition-colors">Ares Group</a>
           </p>
         </div>
-
       </div>
     </footer>
   );

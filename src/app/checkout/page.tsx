@@ -5,9 +5,7 @@ import { useLang } from '@/context/LanguageContext';
 import { Lock, MapPin, Plus } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-
-const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
-const TAX_RATE = 0.10;
+import { calculateProductPrice } from '@/utils/calculatePrice';
 
 interface CartItem {
   id: number;
@@ -15,6 +13,7 @@ interface CartItem {
   name_fa: string;
   weight: number;
   purity: string;
+  metal_type: string;
   making_charges: number;
   accessories_price?: number;
   images: string[] | null;
@@ -40,15 +39,13 @@ export default function CheckoutPage() {
   
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<any>(null);
 
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const [selectedAddressId, setSelectedAddressId] = useState<number | null>(null);
   
-  // Profile fields (LOCKED - auto-filled from localStorage)
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  
-  // Editable fields
   const [phone, setPhone] = useState('');
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
@@ -56,23 +53,29 @@ export default function CheckoutPage() {
   const [postalCode, setPostalCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
+  // Fetch settings and cart data
   useEffect(() => {
-    // CHECK IF USER IS LOGGED IN
     const userPhone = localStorage.getItem('kimorojo_user_phone');
-    if (!userPhone) {
-      // Save where we want to redirect after login
+    const authToken = localStorage.getItem('kimorojo_auth_token');
+    
+    if (!userPhone || !authToken) {
       localStorage.setItem('redirect_after_login', '/checkout');
       router.push('/login');
       return;
     }
 
-    // Load profile data
     const savedProfile = localStorage.getItem('kimorojo_user_profile');
     if (savedProfile) {
       const parsed = JSON.parse(savedProfile);
       setFirstName(parsed.firstName || '');
       setLastName(parsed.lastName || '');
     }
+
+    // Fetch settings
+    fetch('http://127.0.0.1:8000/api/settings')
+      .then(res => res.json())
+      .then(data => setSettings(data.data || data))
+      .catch(err => console.error("Failed to fetch settings", err));
 
     const loadData = async () => {
       try {
@@ -94,14 +97,25 @@ export default function CheckoutPage() {
 
         setCartItems(mergedCart);
 
-        // Load saved addresses
-        const addrRes = await fetch(`http://127.0.0.1:8000/api/addresses?phone=${encodeURIComponent(userPhone)}`);
+        const addrRes = await fetch('http://127.0.0.1:8000/api/addresses', {
+          headers: {
+            'Authorization': `Bearer ${authToken}`,
+            'Accept': 'application/json'
+          }
+        });
         const addrData = await addrRes.json();
         const addresses = addrData.data || [];
         setSavedAddresses(addresses);
         
         const defaultAddr = addresses.find((a: SavedAddress) => a.is_default);
-        if (defaultAddr) handleAddressSelect(defaultAddr);
+        if (defaultAddr) {
+          setSelectedAddressId(defaultAddr.id);
+          setPhone(defaultAddr.phone);
+          setProvince(defaultAddr.province);
+          setCity(defaultAddr.city);
+          setAddress(defaultAddr.address);
+          setPostalCode(defaultAddr.postal_code);
+        }
       } catch (error) {
         console.error("Failed to load checkout data:", error);
       } finally {
@@ -112,20 +126,18 @@ export default function CheckoutPage() {
   }, [router]);
 
   const formatToman = (amount: number) => {
+    if (isNaN(amount) || amount === undefined || amount === null) return '0 ' + (isFarsi ? 'تومان' : 'Toman');
     const locale = isFarsi ? 'fa-IR' : 'en-US';
-    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   const getItemPrice = (item: CartItem) => {
-    const goldValue = GOLD_PRICE_PER_GRAM_TOMAN * item.weight;
-    const makingCharges = item.making_charges || 0;
-    const accessoriesPrice = item.accessories_price || 0;
-    const subtotalItem = goldValue + makingCharges + accessoriesPrice;
-    return subtotalItem + (subtotalItem * TAX_RATE);
+    if (!settings) return 0;
+    return calculateProductPrice(item, settings);
   };
 
   const subtotal = cartItems.reduce((sum, item) => sum + (getItemPrice(item) * item.quantity), 0);
-  const shipping = subtotal > 5000000 ? 0 : 150000;
+  const shipping = 0; // REMOVED SHIPPING COST
   const total = subtotal + shipping;
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
@@ -143,11 +155,19 @@ export default function CheckoutPage() {
     setIsProcessing(true);
 
     const userPhone = localStorage.getItem('kimorojo_user_phone');
-    if (!userPhone) {
+    const authToken = localStorage.getItem('kimorojo_auth_token');
+
+    if (!userPhone || !authToken) {
       alert(isFarsi ? 'لطفا وارد شوید' : 'Please login');
       router.push('/login');
       return;
     }
+
+    const getHeaders = (token: string) => ({
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    });
 
     try {
       let addressId = selectedAddressId;
@@ -155,8 +175,8 @@ export default function CheckoutPage() {
       if (!addressId) {
         const addressPayload = {
           phone: userPhone,
-          first_name: firstName,
-          last_name: lastName,
+          first_name: firstName || 'کاربر',
+          last_name: lastName || 'کاربر',
           phone_number: phone,
           province,
           city,
@@ -167,12 +187,17 @@ export default function CheckoutPage() {
 
         const addrRes = await fetch('http://127.0.0.1:8000/api/addresses', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getHeaders(authToken),
           body: JSON.stringify(addressPayload)
         });
+        
         const addrData = await addrRes.json();
+        if (!addrRes.ok) {
+          console.error("Address validation failed:", addrData);
+          throw new Error(addrData.message || 'Failed to save address');
+        }
+        
         addressId = addrData.data?.id;
-
         if (!addressId) throw new Error('Failed to save address');
       }
 
@@ -180,36 +205,39 @@ export default function CheckoutPage() {
         phone: userPhone,
         address_id: addressId,
         items: cartItems.map(item => ({
-          product_id: item.id,
+          product_id: parseInt(String(item.id), 10),
           quantity: item.quantity,
         })),
         subtotal,
         shipping,
-        tax: subtotal - (subtotal / 1.10),
+        tax: 0,
         total
       };
 
       const orderRes = await fetch('http://127.0.0.1:8000/api/orders', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: getHeaders(authToken),
         body: JSON.stringify(orderPayload)
       });
 
-      if (orderRes.ok) {
+      const orderData = await orderRes.json();
+
+      if (orderRes.ok && orderData.success) {
         localStorage.removeItem('kimorojo_cart');
         router.push('/checkout/success');
       } else {
-        alert(isFarsi ? 'خطا در ثبت سفارش' : 'Failed to place order');
+        console.error("Order failed:", orderData);
+        alert(orderData.message || (isFarsi ? 'خطا در ثبت سفارش' : 'Failed to place order'));
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Checkout error:", error);
-      alert(isFarsi ? 'خطایی رخ داد. لطفا دوباره تلاش کنید.' : 'An error occurred. Please try again.');
+      alert(error.message || (isFarsi ? 'خطایی رخ داد. لطفا دوباره تلاش کنید.' : 'An error occurred. Please try again.'));
     } finally {
       setIsProcessing(false);
     }
   };
 
-  if (loading) {
+  if (loading || !settings) {
     return (
       <div className="max-w-7xl mx-auto px-6 py-24 text-center" dir={isFarsi ? 'rtl' : 'ltr'}>
         <p className="text-gray-500">{isFarsi ? 'در حال بارگذاری...' : 'Loading...'}</p>

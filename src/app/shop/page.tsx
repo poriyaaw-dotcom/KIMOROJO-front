@@ -4,17 +4,20 @@ import { useState, useEffect } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
 import { ChevronDown } from 'lucide-react';
-
-const GOLD_PRICE_PER_GRAM_TOMAN = 4500000;
+import { calculateProductPrice } from '@/utils/calculatePrice'; // <-- ADDED
 
 interface Product {
   id: number;
   name_en: string;
   name_fa: string;
-  weight: number;
+  weight: number | string;
   purity: string;
   metal_type: string;
-  making_charges: number;
+  making_charges: number | string;
+  accessories_price?: number | string;
+  accessories_making_charges?: number | string;
+  accessories_profit?: number | string;
+  apply_tax_on_accessories?: boolean | number;
   images: string[] | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
@@ -32,6 +35,7 @@ export default function ShopAllPage() {
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [settings, setSettings] = useState<any>(null); // <-- ADDED
   const [loading, setLoading] = useState(true);
   
   const [sortBy, setSortBy] = useState('recommended');
@@ -44,16 +48,20 @@ export default function ShopAllPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [productsRes, categoriesRes] = await Promise.all([
+        // <-- ADDED SETTINGS FETCH
+        const [productsRes, categoriesRes, settingsRes] = await Promise.all([
           fetch('http://127.0.0.1:8000/api/products'),
-          fetch('http://127.0.0.1:8000/api/categories')
+          fetch('http://127.0.0.1:8000/api/categories'),
+          fetch('http://127.0.0.1:8000/api/settings')
         ]);
         
         const productsData = await productsRes.json();
         const categoriesData = await categoriesRes.json();
+        const settingsData = await settingsRes.json();
         
         setProducts(productsData.data || []);
         setCategories(categoriesData.data || []);
+        setSettings(settingsData.data || settingsData); // <-- SAVE SETTINGS
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
@@ -70,8 +78,9 @@ export default function ShopAllPage() {
     return categoryMatch && metalMatch;
   });
 
+  // <-- FIXED: NOW USES THE CENTRALIZED FORMULA WITH SETTINGS
   const getProductPrice = (product: Product) => {
-    return (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
+    return calculateProductPrice(product, settings || undefined);
   };
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -89,10 +98,9 @@ export default function ShopAllPage() {
     currentPage * productsPerPage
   );
 
-  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
-    return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
+    return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
   if (loading) {
@@ -127,8 +135,6 @@ export default function ShopAllPage() {
       <div className="flex flex-col md:flex-row gap-12">
         <aside className="w-full md:w-64 flex-shrink-0">
           <div className="sticky top-24 space-y-8">
-            
-            {/* Sort By */}
             <div>
               <h3 className="font-serif text-lg text-black mb-4">{t('sortBy') || 'Sort By'}</h3>
               <div className="relative">
@@ -148,7 +154,6 @@ export default function ShopAllPage() {
               </div>
             </div>
 
-            {/* Categories Filter */}
             <div>
               <h3 className="font-serif text-lg text-black mb-4">{t('categories') || 'Categories'}</h3>
               <ul className="space-y-2 text-sm text-gray-600">
@@ -163,7 +168,6 @@ export default function ShopAllPage() {
               </ul>
             </div>
 
-            {/* Metal Type Filter */}
             <div>
               <h3 className="font-serif text-lg text-black mb-4">{t('metalType') || 'Metal Type'}</h3>
               <ul className="space-y-2 text-sm text-gray-600">
@@ -179,7 +183,6 @@ export default function ShopAllPage() {
           </div>
         </aside>
 
-        {/* Product Grid */}
         <div className="flex-grow">
           {paginatedProducts.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
@@ -209,7 +212,6 @@ export default function ShopAllPage() {
                 })}
               </div>
 
-              {/* Pagination */}
               {totalPages > 1 && (
                 <div className="flex items-center justify-center gap-6 mt-16">
                   <button onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={currentPage === 1} className="text-gray-400 hover:text-black transition-colors disabled:opacity-30 disabled:cursor-not-allowed">

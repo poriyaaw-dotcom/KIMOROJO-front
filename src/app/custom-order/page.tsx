@@ -19,7 +19,6 @@ export default function CustomOrderPage() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  // Check if user is logged in
   useEffect(() => {
     const isLoggedIn = localStorage.getItem('kimorojo_user_phone');
     if (!isLoggedIn) {
@@ -39,6 +38,16 @@ export default function CustomOrderPage() {
     e.preventDefault();
     setLoading(true);
 
+    const authToken = localStorage.getItem('kimorojo_auth_token');
+    
+    // SECURITY: Double-check token exists before sending
+    if (!authToken) {
+      alert(isFarsi ? 'لطفاً ابتدا وارد حساب کاربری خود شوید.' : 'Please login first.');
+      router.push('/login?redirect=/custom-order');
+      setLoading(false);
+      return;
+    }
+    
     const formData = new FormData();
     formData.append('jewelry_type', jewelryType);
     formData.append('metal_type', metalType);
@@ -50,15 +59,19 @@ export default function CustomOrderPage() {
       const res = await fetch('http://127.0.0.1:8000/api/custom-orders', {
         method: 'POST',
         body: formData,
-        // Add auth headers here if your API requires a Bearer token
-        // headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: {
+          'Authorization': `Bearer ${authToken}`,
+          'Accept': 'application/json',
+        },
       });
 
       const data = await res.json();
-      if (data.success) {
+      
+      if (res.ok && data.success) {
         setSuccess(true);
       } else {
-        alert(isFarsi ? 'خطا در ارسال درخواست. لطفاً دوباره تلاش کنید.' : 'Error submitting request. Please try again.');
+        console.error('Server response:', data);
+        alert(data.message || (isFarsi ? 'خطا در ارسال درخواست.' : 'Error submitting request.'));
       }
     } catch (error) {
       console.error('Submission error:', error);
@@ -104,7 +117,6 @@ export default function CustomOrderPage() {
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-8">
-        {/* 1. Jewelry Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             {isFarsi ? 'نوع زیورآلات' : 'Jewelry Type'} <span className="text-red-500">*</span>
@@ -133,7 +145,6 @@ export default function CustomOrderPage() {
           </div>
         </div>
 
-        {/* 2. Metal Type */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             {isFarsi ? 'نوع فلز' : 'Metal Type'} <span className="text-red-500">*</span>
@@ -159,7 +170,6 @@ export default function CustomOrderPage() {
           </div>
         </div>
 
-        {/* 3. Reference Image */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             {isFarsi ? 'تصویر مرجع (اختیاری)' : 'Reference Image (Optional)'}
@@ -182,7 +192,6 @@ export default function CustomOrderPage() {
           </div>
         </div>
 
-        {/* 4. Details */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             {isFarsi ? 'جزئیات و توضیحات' : 'Details & Description'} <span className="text-red-500">*</span>
@@ -197,7 +206,6 @@ export default function CustomOrderPage() {
           />
         </div>
 
-        {/* 5. Budget */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-3">
             {isFarsi ? 'بودجه تقریبی (تومان) - اختیاری' : 'Approximate Budget (Toman) - Optional'}
@@ -211,7 +219,6 @@ export default function CustomOrderPage() {
           />
         </div>
 
-        {/* Submit Button */}
         <button
           type="submit"
           disabled={loading || !jewelryType || !metalType || !details}

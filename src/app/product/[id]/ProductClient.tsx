@@ -213,7 +213,7 @@ export default function ProductClient({
             </div>
           </div>
 
-          <div className="text-center md:text-start p-4 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-lg border border-amber-200">
+          <div className="text-center md:text-start p-4 bg-[#FAF0E6] rounded-lg">
             <div className="flex items-center justify-between gap-4">
               {product.metal_type === 'silver' ? (
                 <p className="text-base font-bold text-gray-800">

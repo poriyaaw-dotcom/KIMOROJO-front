@@ -20,12 +20,27 @@ async function getProduct(id: string) {
 async function getSettings() {
   try {
     const res = await fetch(`http://127.0.0.1:8000/api/settings`, { next: { revalidate: 0 } });
-    if (!res.ok) return { gold_price: 4500000, silver_price: 50000, seller_profit: '0.07', tax_rate: '0.10' };
-    const data = await res.json();
-    return data.data;
+    if (!res.ok) throw new Error('Failed to fetch settings');
+    
+    const response = await res.json();
+    
+    // Safely extract settings whether the API wraps it in 'data' or returns it directly
+    const settings = response.data || response;
+    
+    return {
+      gold_price: Number(settings.gold_price) || 4500000,
+      silver_price: Number(settings.silver_price) || 50000,
+      seller_profit: Number(settings.seller_profit) || 0.07,
+      tax_rate: Number(settings.tax_rate) || 0.10,
+    };
   } catch (error) {
     console.error('Error fetching settings:', error);
-    return { gold_price: 4500000, silver_price: 50000, seller_profit: '0.07', tax_rate: '0.10' };
+    return { 
+      gold_price: 4500000, 
+      silver_price: 50000, 
+      seller_profit: 0.07, 
+      tax_rate: 0.10 
+    };
   }
 }
 
