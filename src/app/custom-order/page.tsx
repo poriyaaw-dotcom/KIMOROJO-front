@@ -56,7 +56,7 @@ export default function CustomOrderPage() {
     if (image) formData.append('reference_image', image);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/custom-orders', {
+      const res = await fetch('http://https://api.kimorojo.com/api/custom-orders', {
         method: 'POST',
         body: formData,
         headers: {

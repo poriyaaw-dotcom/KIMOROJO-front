@@ -58,8 +58,9 @@ export default function ProductClient({
   const productDesc = isFarsi ? product.description_fa : product.description_en;
   const isFav = isFavorite(product.id);
   
+  // FIXED: Removed the broken "http://https://"
   const images = product.images && product.images.length > 0 
-    ? product.images.map(img => `http://127.0.0.1:8000/storage/${img}`)
+    ? product.images.map(img => `https://api.kimorojo.com/storage/${img}`)
     : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
 
   // --- USE CENTRALIZED PRICING FUNCTION ---
@@ -218,14 +219,14 @@ export default function ProductClient({
               {product.metal_type === 'silver' ? (
                 <p className="text-base font-bold text-gray-800">
                   {isFarsi 
-                    ? `قیمت لحظه‌ای نقره: ${formatToman(settings.silver_price).replace(' تومان', '')} / گرم` 
-                    : `Live Silver Price: ${formatToman(settings.silver_price).replace(' Toman', '')} / g`}
+                    ? `قیمت لحظه‌ای نقره: ${formatToman(Number(settings.silver_price)).replace(' تومان', '')} / گرم` 
+                    : `Live Silver Price: ${formatToman(Number(settings.silver_price)).replace(' Toman', '')} / g`}
                 </p>
               ) : (
                 <p className="text-base font-bold text-gray-800">
                   {isFarsi 
-                    ? `قیمت لحظه‌ای طلا: ${formatToman(settings.gold_price).replace(' تومان', '')} / گرم` 
-                    : `Live Gold Price: ${formatToman(settings.gold_price).replace(' Toman', '')} / g`}
+                    ? `قیمت لحظه‌ای طلا: ${formatToman(Number(settings.gold_price)).replace(' تومان', '')} / گرم` 
+                    : `Live Gold Price: ${formatToman(Number(settings.gold_price)).replace(' Toman', '')} / g`}
                 </p>
               )}
               
@@ -315,8 +316,9 @@ export default function ProductClient({
               const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
               const relFinalPrice = calculateProductPrice(relProduct, settings);
               
+              // FIXED: Removed the broken "http://https://"
               const relImage = relProduct.images && relProduct.images.length > 0 
-                ? `http://127.0.0.1:8000/storage/${relProduct.images[0]}` 
+                ? `https://api.kimorojo.com/storage/${relProduct.images[0]}` 
                 : '';
               
               return (

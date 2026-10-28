@@ -41,7 +41,7 @@ export default function CartPage() {
           return;
         }
 
-        const res = await fetch('http://127.0.0.1:8000/api/products');
+        const res = await fetch('http://https://api.kimorojo.com/api/products');
         const data = await res.json();
         const allProducts = data.data || [];
 
@@ -117,7 +117,7 @@ export default function CartPage() {
           {fullCartItems.map((item) => {
             const itemName = isFarsi ? item.name_fa : item.name_en;
             const itemPrice = getItemPrice(item);
-            const itemImage = item.images && item.images.length > 0 ? `http://127.0.0.1:8000/storage/${item.images[0]}` : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=200&q=80';
+            const itemImage = item.images && item.images.length > 0 ? `http://https://api.kimorojo.com/storage/${item.images[0]}` : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=200&q=80';
             const isOverStock = item.quantity > item.stock;
 
             return (

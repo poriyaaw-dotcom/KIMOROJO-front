@@ -32,7 +32,7 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/products');
+        const res = await fetch('http://https://api.kimorojo.com/api/products');
         const data = await res.json();
         const allProducts = data.data || [];
         
@@ -81,7 +81,7 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
             const itemPrice = (GOLD_PRICE_PER_GRAM_TOMAN * product.weight) + product.making_charges;
             
             const itemImage = product.images && product.images.length > 0 
-              ? `http://127.0.0.1:8000/storage/${product.images[0]}`
+              ? `http://https://api.kimorojo.com/storage/${product.images[0]}`
               : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
 
             return (

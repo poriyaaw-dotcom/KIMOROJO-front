@@ -30,7 +30,7 @@ export default function SearchPage() {
   // --- FETCH SETTINGS FROM ADMIN PANEL ---
   const [settings, setSettings] = useState<any>(null);
   useEffect(() => {
-    fetch('http://127.0.0.1:8000/api/settings')
+    fetch('http://https://api.kimorojo.com/api/settings')
       .then(res => res.json())
       .then(data => setSettings(data.data || data))
       .catch(err => console.error("Failed to fetch settings", err));
@@ -39,7 +39,7 @@ export default function SearchPage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/products');
+        const res = await fetch('http://https://api.kimorojo.com/api/products');
         const data = await res.json();
         const allProducts = data.data || [];
         
@@ -85,7 +85,7 @@ export default function SearchPage() {
           {products.map((product) => {
             const itemName = isFarsi ? product.name_fa : product.name_en;
             const price = getProductPrice(product);
-            const mainImage = product.images && product.images.length > 0 ? `http://127.0.0.1:8000/storage/${product.images[0]}` : '';
+            const mainImage = product.images && product.images.length > 0 ? `http://https://api.kimorojo.com/storage/${product.images[0]}` : '';
             
             return (
               <ProductCard 

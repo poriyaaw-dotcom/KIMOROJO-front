@@ -4,7 +4,7 @@ import ProductClient from './ProductClient';
 
 async function getProduct(id: string) {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/products/${id}`, { next: { revalidate: 0 } });
+    const res = await fetch(`http://https://api.kimorojo.com/api/products/${id}`, { next: { revalidate: 0 } });
     if (!res.ok) {
       console.error('Failed to fetch product:', res.status, await res.text());
       return null;
@@ -19,7 +19,7 @@ async function getProduct(id: string) {
 
 async function getSettings() {
   try {
-    const res = await fetch(`http://127.0.0.1:8000/api/settings`, { next: { revalidate: 0 } });
+    const res = await fetch(`http://https://api.kimorojo.com/api/settings`, { next: { revalidate: 0 } });
     if (!res.ok) throw new Error('Failed to fetch settings');
     
     const response = await res.json();
@@ -54,7 +54,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const title = product.meta_title || `${product.name_en} | KIMOROJO Premium Jewelry`;
   const description = product.meta_description || product.description_en || 'Exquisite handcrafted jewelry for every moment.';
-  const imageUrl = product.images?.[0] ? `http://127.0.0.1:8000/storage/${product.images[0]}` : undefined;
+  const imageUrl = product.images?.[0] ? `http://https://api.kimorojo.com/storage/${product.images[0]}` : undefined;
 
   return {
     title,
@@ -85,7 +85,7 @@ export default async function ProductPage({ params }: { params: Promise<{ id: st
   let relatedProducts = [];
   if (product?.collection?.slug) {
     try {
-      const allRes = await fetch(`http://127.0.0.1:8000/api/products`, { next: { revalidate: 0 } });
+      const allRes = await fetch(`http://https://api.kimorojo.com/api/products`, { next: { revalidate: 0 } });
       if (allRes.ok) {
         const allData = await allRes.json();
         relatedProducts = allData.data?.filter((p: any) => 
