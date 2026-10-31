@@ -127,7 +127,6 @@ export default function ShopClient({
         <div><strong>1st Product Weight:</strong> {firstProduct?.weight}</div>
         <div><strong>1st Product Making:</strong> {firstProduct?.making_charges}</div>
         <div><strong>1st Product Acc. Price:</strong> {firstProduct?.accessories_price}</div>
-        <div><strong>CALCULATED PRICE:</strong> {debugPrice}</div>
       </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12" dir={isFarsi ? 'rtl' : 'ltr'}>
