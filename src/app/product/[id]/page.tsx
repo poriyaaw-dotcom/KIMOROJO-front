@@ -4,20 +4,28 @@ import ProductClient from './ProductClient';
 
 async function getProduct(id: string) {
   try {
-    const res = await fetch(`https://admin.kimorojo.ir/api/products/${id}`, { 
+    const url = `https://admin.kimorojo.ir/api/products/${id}`;
+    console.log('🔍 Fetching product from:', url);
+    
+    const res = await fetch(url, { 
       next: { revalidate: 0 },
       cache: 'no-store'
     });
     
+    console.log('📡 Product API response status:', res.status);
+    
     if (!res.ok) {
-      console.error('Failed to fetch product:', res.status, res.statusText);
+      console.error('❌ Failed to fetch product:', res.status, res.statusText);
       return null;
     }
     
     const data = await res.json();
-    return data.data || data;
+    console.log('✅ Product API data received:', data);
+    
+    // Safely extract the product whether it's in data.data or just data
+    return data?.data || data || null;
   } catch (error) {
-    console.error('Error fetching product:', error);
+    console.error('💥 Error fetching product:', error);
     return null;
   }
 }
@@ -58,7 +66,6 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const title = product.meta_title || `${product.name_en} | KIMOROJO Premium Jewelry`;
   const description = product.meta_description || product.description_en || 'Exquisite handcrafted jewelry for every moment.';
   
-  // Safe image parsing for metadata
   let mainImage = null;
   if (product.images) {
     try {
@@ -74,26 +81,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-      images: mainImage ? [{ url: mainImage }] : undefined,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-      images: mainImage ? [mainImage] : undefined,
-    },
+    openGraph: { title, description, images: mainImage ? [{ url: mainImage }] : undefined },
+    twitter: { card: 'summary_large_image', title, description, images: mainImage ? [mainImage] : undefined },
   };
 }
 
 export default async function ProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  console.log('🚀 Rendering ProductPage for ID:', id);
+  
   const product = await getProduct(id);
   const settings = await getSettings();
 
   if (!product) {
+    console.log('⚠️ Product not found, triggering 404');
     notFound();
   }
 

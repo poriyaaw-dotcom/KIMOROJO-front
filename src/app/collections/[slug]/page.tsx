@@ -2,18 +2,30 @@ import { Metadata } from 'next';
 import Link from 'next/link';
 import CollectionClient from './CollectionClient';
 
+const API_URL = 'https://admin.kimorojo.ir';
+
 async function getCollections() {
-  const res = await fetch('https://admin.kimorojo.ir/api/collections', { next: { revalidate: 60 } });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data || [];
+  try {
+    const res = await fetch(`${API_URL}/api/collections`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Failed to fetch collections:", error);
+    return [];
+  }
 }
 
 async function getProducts() {
-  const res = await fetch('https://admin.kimorojo.ir/api/products', { next: { revalidate: 60 } });
-  if (!res.ok) return [];
-  const data = await res.json();
-  return data.data || [];
+  try {
+    const res = await fetch(`${API_URL}/api/products`, { next: { revalidate: 60 } });
+    if (!res.ok) return [];
+    const data = await res.json();
+    return data.data || [];
+  } catch (error) {
+    console.error("Failed to fetch products:", error);
+    return [];
+  }
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
