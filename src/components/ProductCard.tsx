@@ -2,27 +2,23 @@
 
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
+import { getSafeFirstImage } from '@/utils/imageHelper';
 
 interface ProductCardProps {
   id: number;
   name: string;
   price: string;
-  image: string;
-  hoverImage?: string;
+  image: string | string[] | null; // Updated to safely accept arrays or strings
+  hoverImage?: string | string[] | null;
   category: string;
 }
-
-const getImageUrl = (imgPath: string) => {
-  if (!imgPath) return 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
-  if (imgPath.startsWith('http')) return imgPath;
-  return `https://admin.kimorojo.ir/storage/${imgPath}`;
-};
 
 export default function ProductCard({ id, name, price, image, hoverImage, category }: ProductCardProps) {
   const { lang } = useLang();
   
-  const mainImg = getImageUrl(image);
-  const hoverImg = hoverImage ? getImageUrl(hoverImage) : mainImg;
+  // Use our bulletproof helper to get a clean URL
+  const mainImg = getSafeFirstImage(image) || 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
+  const hoverImg = hoverImage ? getSafeFirstImage(hoverImage) : mainImg;
 
   return (
     <Link href={`/product/${id}`} className="group block">

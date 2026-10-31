@@ -4,11 +4,16 @@ import ProductClient from './ProductClient';
 
 async function getProduct(id: string) {
   try {
-    const res = await fetch(`https://admin.kimorojo.ir/api/products/${id}`, { next: { revalidate: 0 } });
+    const res = await fetch(`https://admin.kimorojo.ir/api/products/${id}`, { 
+      next: { revalidate: 0 },
+      cache: 'no-store'
+    });
+    
     if (!res.ok) {
-      console.error('Failed to fetch product:', res.status, await res.text());
+      console.error('Failed to fetch product:', res.status, res.statusText);
       return null;
     }
+    
     const data = await res.json();
     return data.data || data;
   } catch (error) {
@@ -23,8 +28,6 @@ async function getSettings() {
     if (!res.ok) throw new Error('Failed to fetch settings');
     
     const response = await res.json();
-    
-    // Safely extract settings whether the API wraps it in 'data' or returns it directly
     const settings = response.data || response;
     
     return {
@@ -54,7 +57,19 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
 
   const title = product.meta_title || `${product.name_en} | KIMOROJO Premium Jewelry`;
   const description = product.meta_description || product.description_en || 'Exquisite handcrafted jewelry for every moment.';
-  const imageUrl = product.images?.[0] ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : undefined;
+  
+  // Safe image parsing for metadata
+  let mainImage = null;
+  if (product.images) {
+    try {
+      const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        mainImage = `https://admin.kimorojo.ir/storage/${parsed[0]}`;
+      }
+    } catch (e) {
+      // Ignore parsing errors
+    }
+  }
 
   return {
     title,
@@ -62,13 +77,13 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     openGraph: {
       title,
       description,
-      images: imageUrl ? [{ url: imageUrl }] : undefined,
+      images: mainImage ? [{ url: mainImage }] : undefined,
     },
     twitter: {
       card: 'summary_large_image',
       title,
       description,
-      images: imageUrl ? [imageUrl] : undefined,
+      images: mainImage ? [mainImage] : undefined,
     },
   };
 }

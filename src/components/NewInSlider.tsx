@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { useEffect, useState } from 'react';
 import { calculateProductPrice } from '@/utils/calculatePrice';
+import { getSafeFirstImage } from '@/utils/imageHelper'; // <-- ADDED
 
 interface Product {
   id: number;
@@ -17,7 +18,7 @@ interface Product {
   accessories_making_charges?: number;
   accessories_profit?: number;
   apply_tax_on_accessories?: boolean;
-  images: string[] | null;
+  images: string[] | string | null; // <-- UPDATED
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
 
@@ -87,9 +88,9 @@ export default function NewInSlider() {
           {products.map((product) => {
             const itemName = isFarsi ? product.name_fa : product.name_en;
             const itemPrice = getItemPrice(product);
-            const itemImage = product.images && product.images.length > 0 
-              ? `https://admin.kimorojo.ir/storage/${product.images[0]}`
-              : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
+            
+            // SAFE IMAGE PARSING
+            const itemImage = getSafeFirstImage(product.images) || 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
 
             return (
               <Link href={`/product/${product.id}`} key={product.id} className="group flex-shrink-0 w-[280px] snap-center">

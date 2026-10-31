@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import ProductCard from '@/components/ProductCard';
 import { ChevronDown } from 'lucide-react';
-import { calculateProductPrice } from '@/utils/calculatePrice'; // <-- ADDED
+import { calculateProductPrice } from '@/utils/calculatePrice';
 
 interface Product {
   id: number;
@@ -18,7 +18,7 @@ interface Product {
   accessories_making_charges?: number | string;
   accessories_profit?: number | string;
   apply_tax_on_accessories?: boolean | number;
-  images: string[] | null;
+  images: string[] | string | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
 
@@ -29,13 +29,20 @@ interface Category {
   slug: string;
 }
 
+// Safe image parsing helper
+const parseImages = (img: any): string[] => {
+  if (!img) return [];
+  if (Array.isArray(img)) return img;
+  try { return JSON.parse(img); } catch { return typeof img === 'string' ? [img] : []; }
+};
+
 export default function ShopAllPage() {
   const { t, lang } = useLang();
   const isFarsi = lang === 'fa';
   
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [settings, setSettings] = useState<any>(null); // <-- ADDED
+  const [settings, setSettings] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   
   const [sortBy, setSortBy] = useState('recommended');
@@ -48,7 +55,6 @@ export default function ShopAllPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // <-- ADDED SETTINGS FETCH
         const [productsRes, categoriesRes, settingsRes] = await Promise.all([
           fetch('https://admin.kimorojo.ir/api/products'),
           fetch('https://admin.kimorojo.ir/api/categories'),
@@ -61,7 +67,7 @@ export default function ShopAllPage() {
         
         setProducts(productsData.data || []);
         setCategories(categoriesData.data || []);
-        setSettings(settingsData.data || settingsData); // <-- SAVE SETTINGS
+        setSettings(settingsData.data || settingsData);
       } catch (error) {
         console.error("Failed to fetch data", error);
       } finally {
@@ -78,7 +84,6 @@ export default function ShopAllPage() {
     return categoryMatch && metalMatch;
   });
 
-  // <-- FIXED: NOW USES THE CENTRALIZED FORMULA WITH SETTINGS
   const getProductPrice = (product: Product) => {
     return calculateProductPrice(product, settings || undefined);
   };
@@ -195,8 +200,10 @@ export default function ShopAllPage() {
                   const itemName = isFarsi ? product.name_fa : product.name_en;
                   const price = getProductPrice(product);
                   
-                  const mainImage = product.images && product.images.length > 0 ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : null;
-                  const hoverImage = product.images && product.images.length > 1 ? `https://admin.kimorojo.ir/storage/${product.images[1]}` : null;
+                  // SAFE IMAGE PARSING
+                  const parsedImages = parseImages(product.images);
+                  const mainImage = parsedImages.length > 0 ? `https://admin.kimorojo.ir/storage/${parsedImages[0]}` : null;
+                  const hoverImage = parsedImages.length > 1 ? `https://admin.kimorojo.ir/storage/${parsedImages[1]}` : null;
                   
                   return (
                     <ProductCard 

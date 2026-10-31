@@ -1,21 +1,22 @@
 import { Metadata } from 'next';
 import ShopClient from './ShopClient';
 
+const API_URL = 'https://admin.kimorojo.ir';
+
 async function getCategories() {
-  const res = await fetch('http://127.0.0.1:8000/api/categories', { next: { revalidate: 60 } });
+  const res = await fetch(`${API_URL}/api/categories`, { next: { revalidate: 60 } });
   if (!res.ok) return [];
   const data = await res.json();
   return data.data || [];
 }
 
 async function getProducts() {
-  const res = await fetch('http://127.0.0.1:8000/api/products', { next: { revalidate: 60 } });
+  const res = await fetch(`${API_URL}/api/products`, { next: { revalidate: 60 } });
   if (!res.ok) return [];
   const data = await res.json();
   return data.data || [];
 }
 
-// --- DYNAMIC SEO METADATA FOR CATEGORIES ---
 export async function generateMetadata({ params }: { params: Promise<{ category: string }> }): Promise<Metadata> {
   const { category: slug } = await params;
   const categories = await getCategories();
@@ -31,15 +32,8 @@ export async function generateMetadata({ params }: { params: Promise<{ category:
   return {
     title,
     description,
-    openGraph: {
-      title,
-      description,
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      description,
-    },
+    openGraph: { title, description },
+    twitter: { card: 'summary_large_image', title, description },
   };
 }
 

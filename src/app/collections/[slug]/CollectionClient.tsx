@@ -17,7 +17,7 @@ interface Product {
   accessories_making_charges?: number | string;
   accessories_profit?: number | string;
   apply_tax_on_accessories?: boolean | number;
-  images: string[] | null;
+  images: string[] | string | null;
   collection: { slug: string; name_en: string; name_fa: string } | null;
 }
 
@@ -28,6 +28,13 @@ interface Collection {
   slug: string;
   image: string | null;
 }
+
+// Safe image parsing helper
+const parseImages = (img: any): string[] => {
+  if (!img) return [];
+  if (Array.isArray(img)) return img;
+  try { return JSON.parse(img); } catch { return typeof img === 'string' ? [img] : []; }
+};
 
 export default function CollectionClient({ 
   initialProducts, 
@@ -40,9 +47,8 @@ export default function CollectionClient({
   const isFarsi = lang === 'fa';
   
   const [products] = useState<Product[]>(initialProducts);
-
-  // --- FETCH SETTINGS FROM ADMIN PANEL ---
   const [settings, setSettings] = useState<any>(null);
+
   useEffect(() => {
     fetch('https://admin.kimorojo.ir/api/settings')
       .then(res => res.json())
@@ -55,7 +61,6 @@ export default function CollectionClient({
     return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
   };
 
-  // --- USE CENTRALIZED PRICING FUNCTION WITH SETTINGS ---
   const getProductPrice = (product: Product) => {
     if (!settings) return 0;
     return calculateProductPrice(product, settings);
@@ -98,8 +103,10 @@ export default function CollectionClient({
               const itemName = isFarsi ? product.name_fa : product.name_en;
               const price = getProductPrice(product);
               
-              const mainImage = product.images && product.images.length > 0 ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : null;
-              const hoverImage = product.images && product.images.length > 1 ? `https://admin.kimorojo.ir/storage/${product.images[1]}` : null;
+              // SAFE IMAGE PARSING
+              const parsedImages = parseImages(product.images);
+              const mainImage = parsedImages.length > 0 ? `https://admin.kimorojo.ir/storage/${parsedImages[0]}` : null;
+              const hoverImage = parsedImages.length > 1 ? `https://admin.kimorojo.ir/storage/${parsedImages[1]}` : null;
               
               return (
                 <ProductCard 

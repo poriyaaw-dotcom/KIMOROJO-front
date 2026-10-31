@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { useEffect, useState } from 'react';
+import { getSafeFirstImage } from '@/utils/imageHelper'; // <-- ADDED SAFE HELPER
 
 interface Category {
   id: number;
   name_en: string;
   name_fa: string;
   slug: string;
-  image?: string | null; // <-- ADDED THIS
+  image?: string | string[] | null; // <-- UPDATED TO BE SAFE
 }
 
 // Fallback image just in case a category doesn't have one yet
@@ -55,10 +56,8 @@ export default function CategoryGrid() {
         {categories.map((category) => {
           const name = isFarsi ? category.name_fa : category.name_en;
           
-          // USES the uploaded image if it exists, otherwise uses the fallback
-          const image = category.image 
-            ? `https://admin.kimorojo.ir/storage/${category.image}`
-            : fallbackImage;
+          // 100% BULLETPROOF IMAGE PARSING
+          const image = getSafeFirstImage(category.image) || fallbackImage;
 
           return (
             <Link 

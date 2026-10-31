@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { useEffect, useState } from 'react';
+import { getSafeFirstImage } from '@/utils/imageHelper'; // <-- ADDED
 
 interface Collection {
   id: number;
   name_en: string;
   name_fa: string;
   slug: string;
-  image?: string;
+  image?: string | string[] | null; // <-- UPDATED
 }
 
 export default function CollectionsGrid() {
@@ -50,13 +51,12 @@ export default function CollectionsGrid() {
         {t('collections')}
       </h2>
       
-      {/* CHANGED: Now strictly 1 column on mobile, 2 columns on desktop for bigger images */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
         {collections.map((collection) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
-          const image = collection.image 
-            ? `https://admin.kimorojo.ir/storage/${collection.image}`
-            : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80";
+          
+          // SAFE IMAGE PARSING
+          const image = getSafeFirstImage(collection.image) || "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80";
 
           return (
             <Link 

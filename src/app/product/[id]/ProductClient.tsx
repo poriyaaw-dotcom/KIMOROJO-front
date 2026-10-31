@@ -24,13 +24,28 @@ interface Product {
   accessories_profit?: number | string;
   apply_tax_on_accessories?: boolean | number;
   stock: number;
-  images: string[] | null;
+  images: string[] | string | null; // Updated to allow string
   slug: string;
   meta_title: string | null;
   meta_description: string | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
   collection: { slug: string; name_en: string; name_fa: string } | null;
 }
+
+// Helper function to safely parse images whether they are a string or array
+const getSafeImages = (images: string[] | string | null | undefined): string[] => {
+  if (!images) return [];
+  if (Array.isArray(images)) return images;
+  if (typeof images === 'string') {
+    try {
+      const parsed = JSON.parse(images);
+      return Array.isArray(parsed) ? parsed : [images];
+    } catch (e) {
+      return [images];
+    }
+  }
+  return [];
+};
 
 export default function ProductClient({ 
   product, 
@@ -58,15 +73,14 @@ export default function ProductClient({
   const productDesc = isFarsi ? product.description_fa : product.description_en;
   const isFav = isFavorite(product.id);
   
-  // FIXED: Removed the broken "http://https://"
-  const images = product.images && product.images.length > 0 
-    ? product.images.map(img => `https://admin.kimorojo.ir/storage/${img}`)
+  // SAFE IMAGE PARSING: Prevents server crashes if Laravel sends a JSON string
+  const parsedImages = getSafeImages(product.images);
+  const images = parsedImages.length > 0 
+    ? parsedImages.map(img => `https://admin.kimorojo.ir/storage/${img}`)
     : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
 
-  // --- USE CENTRALIZED PRICING FUNCTION ---
   const finalPrice = calculateProductPrice(product, settings);
 
-  // Breakdown calculation for UI display
   const P = product.metal_type === 'silver' 
     ? (Number(settings.silver_price) || 4900000) 
     : (Number(settings.gold_price) || 26000000);
@@ -238,7 +252,6 @@ export default function ProductClient({
             </div>
           </div>
 
-          {/* SIMPLIFIED PRICE BREAKDOWN */}
           <div className="bg-gray-50 p-6 rounded-sm border border-gray-100 space-y-3">
             <h3 className="font-medium text-gray-900 mb-3">{isFarsi ? 'جزئیات قیمت' : 'Price Breakdown'}</h3>
             
@@ -316,9 +329,10 @@ export default function ProductClient({
               const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
               const relFinalPrice = calculateProductPrice(relProduct, settings);
               
-              // FIXED: Removed the broken "http://https://"
-              const relImage = relProduct.images && relProduct.images.length > 0 
-                ? `https://admin.kimorojo.ir/storage/${relProduct.images[0]}` 
+              // SAFE IMAGE PARSING for related products too
+              const relParsedImages = getSafeImages(relProduct.images);
+              const relImage = relParsedImages.length > 0 
+                ? `https://admin.kimorojo.ir/storage/${relParsedImages[0]}` 
                 : '';
               
               return (

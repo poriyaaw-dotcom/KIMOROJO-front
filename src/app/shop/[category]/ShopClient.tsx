@@ -18,7 +18,7 @@ interface Product {
   accessories_making_charges?: number | string;
   accessories_profit?: number | string;
   apply_tax_on_accessories?: boolean | number;
-  images: string[] | null;
+  images: string[] | string | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
 
@@ -28,6 +28,13 @@ interface Category {
   name_fa: string;
   slug: string;
 }
+
+// Safe image parsing helper
+const parseImages = (img: any): string[] => {
+  if (!img) return [];
+  if (Array.isArray(img)) return img;
+  try { return JSON.parse(img); } catch { return typeof img === 'string' ? [img] : []; }
+};
 
 export default function ShopClient({ 
   initialProducts, 
@@ -110,15 +117,11 @@ export default function ShopClient({
 
   const currentCategoryName = categories.find(c => c.slug === filterCategory)?.[isFarsi ? 'name_fa' : 'name_en'] || (filterCategory === 'all' ? (t('allCategories') || 'All Categories') : filterCategory);
 
-  // ==========================================
-  // UNDENIABLE DEBUG BOX
-  // ==========================================
   const firstProduct = paginatedProducts[0];
   const debugPrice = firstProduct ? getProductPrice(firstProduct) : 0;
 
   return (
     <>
-      {/* THIS RED BOX WILL SHOW EXACTLY WHAT THE CODE IS SEEING */}
       <div style={{ position: 'fixed', top: 10, left: 10, background: 'red', color: 'white', padding: '15px', zIndex: 9999, fontSize: '14px', fontFamily: 'monospace', borderRadius: '8px', direction: 'ltr' }}>
         <div><strong>SETTINGS:</strong> {JSON.stringify(settings)}</div>
         <div><strong>1st Product Weight:</strong> {firstProduct?.weight}</div>
@@ -194,8 +197,11 @@ export default function ShopClient({
                   {paginatedProducts.map((product) => {
                     const itemName = isFarsi ? product.name_fa : product.name_en;
                     const price = getProductPrice(product);
-                    const mainImage = product.images && product.images.length > 0 ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : null;
-                    const hoverImage = product.images && product.images.length > 1 ? `https://admin.kimorojo.ir/storage/${product.images[1]}` : null;
+                    
+                    // SAFE IMAGE PARSING
+                    const parsedImages = parseImages(product.images);
+                    const mainImage = parsedImages.length > 0 ? `https://admin.kimorojo.ir/storage/${parsedImages[0]}` : null;
+                    const hoverImage = parsedImages.length > 1 ? `https://admin.kimorojo.ir/storage/${parsedImages[1]}` : null;
                     
                     return (
                       <ProductCard 
