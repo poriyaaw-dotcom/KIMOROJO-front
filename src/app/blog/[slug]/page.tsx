@@ -24,7 +24,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
   useEffect(() => {
     const fetchBlog = async () => {
       try {
-        const res = await fetch(`http://https://api.kimorojo.com/api/blogs/${params.slug}`);
+        const res = await fetch(`https://admin.kimorojo.ir/api/blogs/${params.slug}`);
         const data = await res.json();
         if (data.data) {
           setBlog(data.data);
@@ -70,7 +70,7 @@ export default function BlogPostPage({ params }: { params: { slug: string } }) {
       <h1 className="text-4xl md:text-5xl font-serif text-gray-900 mb-6">{blog.title}</h1>
       
       {blog.image && (
-        <img src={`http://https://api.kimorojo.com/storage/${blog.image}`} alt={blog.title} className="w-full aspect-video object-cover rounded-sm mb-8" />
+        <img src={`https://admin.kimorojo.ir/storage/${blog.image}`} alt={blog.title} className="w-full aspect-video object-cover rounded-sm mb-8" />
       )}
       
       <div className="prose prose-lg max-w-none text-gray-700" dangerouslySetInnerHTML={{ __html: blog.content }} />

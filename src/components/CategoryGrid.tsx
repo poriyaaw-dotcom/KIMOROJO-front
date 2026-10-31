@@ -24,7 +24,7 @@ export default function CategoryGrid() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('http://https://api.kimorojo.com/api/categories');
+        const res = await fetch('https://admin.kimorojo.ir/api/categories');
         const data = await res.json();
         setCategories(data.data || []);
       } catch (error) {
@@ -57,7 +57,7 @@ export default function CategoryGrid() {
           
           // USES the uploaded image if it exists, otherwise uses the fallback
           const image = category.image 
-            ? `http://https://api.kimorojo.com/storage/${category.image}`
+            ? `https://admin.kimorojo.ir/storage/${category.image}`
             : fallbackImage;
 
           return (

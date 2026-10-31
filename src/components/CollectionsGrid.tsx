@@ -19,7 +19,7 @@ export default function CollectionsGrid() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://https://api.kimorojo.com/api/collections')
+    fetch('https://admin.kimorojo.ir/api/collections')
       .then((res) => res.json())
       .then((data) => {
         setCollections(data.data || []);
@@ -55,7 +55,7 @@ export default function CollectionsGrid() {
         {collections.map((collection) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
           const image = collection.image 
-            ? `http://https://api.kimorojo.com/storage/${collection.image}`
+            ? `https://admin.kimorojo.ir/storage/${collection.image}`
             : "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80";
 
           return (

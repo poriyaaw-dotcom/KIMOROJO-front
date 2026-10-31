@@ -93,7 +93,7 @@ export default function LoginPage() {
     setPhoneError('');
 
     try {
-      const res = await fetch('http://https://api.kimorojo.com/api/auth/send-otp', {
+      const res = await fetch('https://admin.kimorojo.ir/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: normalizedPhone }),
@@ -125,7 +125,7 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
-      const res = await fetch('http://https://api.kimorojo.com/api/auth/verify-otp', {
+      const res = await fetch('https://admin.kimorojo.ir/api/auth/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: loginPhone, code: otpCode }),
@@ -189,7 +189,7 @@ export default function LoginPage() {
       isSubmitting.current = true;
       setIsLoading(true);
       try {
-        const res = await fetch('http://https://api.kimorojo.com/api/auth/send-otp', {
+        const res = await fetch('https://admin.kimorojo.ir/api/auth/send-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ phone: loginPhone }),

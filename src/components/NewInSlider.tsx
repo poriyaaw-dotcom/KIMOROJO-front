@@ -32,8 +32,8 @@ export default function NewInSlider() {
     const fetchData = async () => {
       try {
         const [prodRes, settingsRes] = await Promise.all([
-          fetch('http://https://api.kimorojo.com/api/products'),
-          fetch('http://https://api.kimorojo.com/api/settings')
+          fetch('https://admin.kimorojo.ir/api/products'),
+          fetch('https://admin.kimorojo.ir/api/settings')
         ]);
         const prodData = await prodRes.json();
         const settingsData = await settingsRes.json();
@@ -88,7 +88,7 @@ export default function NewInSlider() {
             const itemName = isFarsi ? product.name_fa : product.name_en;
             const itemPrice = getItemPrice(product);
             const itemImage = product.images && product.images.length > 0 
-              ? `http://https://api.kimorojo.com/storage/${product.images[0]}`
+              ? `https://admin.kimorojo.ir/storage/${product.images[0]}`
               : 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
 
             return (

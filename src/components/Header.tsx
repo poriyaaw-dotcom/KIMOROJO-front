@@ -57,8 +57,8 @@ export default function Header() {
     const fetchData = async () => {
       try {
         const [catRes, colRes] = await Promise.all([
-          fetch('http://https://api.kimorojo.com/api/categories'),
-          fetch('http://https://api.kimorojo.com/api/collections')
+          fetch('https://admin.kimorojo.ir/api/categories'),
+          fetch('https://admin.kimorojo.ir/api/collections')
         ]);
         const catData = await catRes.json();
         const colData = await colRes.json();

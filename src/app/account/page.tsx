@@ -52,7 +52,7 @@ export default function AccountPage() {
 
   const loadProfile = async (token: string) => {
     try {
-      const res = await fetch('http://https://api.kimorojo.com/api/profile', { headers: getHeaders(token) });
+      const res = await fetch('https://admin.kimorojo.ir/api/profile', { headers: getHeaders(token) });
       const data = await res.json();
       if (data.success && data.data) {
         setProfileName(data.data.first_name || '');
@@ -64,15 +64,15 @@ export default function AccountPage() {
 
   const fetchData = async (token: string) => {
     try {
-      const addrRes = await fetch('http://https://api.kimorojo.com/api/addresses', { headers: getHeaders(token) });
+      const addrRes = await fetch('https://admin.kimorojo.ir/api/addresses', { headers: getHeaders(token) });
       const addrData = await addrRes.json();
       if (addrData.success) setAddresses(addrData.data || []);
 
-      const orderRes = await fetch('http://https://api.kimorojo.com/api/orders', { headers: getHeaders(token) });
+      const orderRes = await fetch('https://admin.kimorojo.ir/api/orders', { headers: getHeaders(token) });
       const orderData = await orderRes.json();
       if (orderData.success) setOrders(orderData.data || []);
 
-      const customRes = await fetch('http://https://api.kimorojo.com/api/custom-orders', { headers: getHeaders(token) });
+      const customRes = await fetch('https://admin.kimorojo.ir/api/custom-orders', { headers: getHeaders(token) });
       const customData = await customRes.json();
       if (customData.success) setCustomOrders(customData.data || []);
     } catch (error) { console.error("Failed to fetch account data", error); } 
@@ -82,7 +82,7 @@ export default function AccountPage() {
   const handleSaveProfile = async () => {
     if (!authToken) return;
     try {
-      const res = await fetch('http://https://api.kimorojo.com/api/profile', {
+      const res = await fetch('https://admin.kimorojo.ir/api/profile', {
         method: 'POST',
         headers: getHeaders(authToken),
         body: JSON.stringify({ first_name: profileName, last_name: profileSurname })
@@ -98,7 +98,7 @@ export default function AccountPage() {
   const handleDeleteAddress = async (id: number) => {
     if (!authToken || !confirm(isFarsi ? 'آیا از حذف این آدرس مطمئن هستید؟' : 'Are you sure?')) return;
     try {
-      const res = await fetch(`http://https://api.kimorojo.com/api/addresses/${id}`, { method: 'DELETE', headers: getHeaders(authToken) });
+      const res = await fetch(`https://admin.kimorojo.ir/api/addresses/${id}`, { method: 'DELETE', headers: getHeaders(authToken) });
       const data = await res.json();
       if (data.success) setAddresses(prev => prev.filter(a => a.id !== id));
       else alert(data.message || 'Cannot delete');
@@ -109,7 +109,7 @@ export default function AccountPage() {
     if (!authToken) return;
     try {
       const addr = addresses.find(a => a.id === id);
-      const res = await fetch(`http://https://api.kimorojo.com/api/addresses/${id}`, {
+      const res = await fetch(`https://admin.kimorojo.ir/api/addresses/${id}`, {
         method: 'PUT',
         headers: getHeaders(authToken),
         body: JSON.stringify({ ...editForm, first_name: addr?.first_name || profileName, last_name: addr?.last_name || profileSurname })
@@ -126,7 +126,7 @@ export default function AccountPage() {
     e.preventDefault();
     if (!authToken) return;
     try {
-      const res = await fetch('http://https://api.kimorojo.com/api/addresses', {
+      const res = await fetch('https://admin.kimorojo.ir/api/addresses', {
         method: 'POST',
         headers: getHeaders(authToken),
         body: JSON.stringify({ ...newAddress, first_name: profileName || 'User', last_name: profileSurname || 'Name' })

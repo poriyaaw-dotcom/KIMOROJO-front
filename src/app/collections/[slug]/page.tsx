@@ -3,14 +3,14 @@ import Link from 'next/link';
 import CollectionClient from './CollectionClient';
 
 async function getCollections() {
-  const res = await fetch('https://api.kimorojo.com/api/collections', { next: { revalidate: 60 } });
+  const res = await fetch('https://admin.kimorojo.ir/api/collections', { next: { revalidate: 60 } });
   if (!res.ok) return [];
   const data = await res.json();
   return data.data || [];
 }
 
 async function getProducts() {
-  const res = await fetch('https://api.kimorojo.com/api/products', { next: { revalidate: 60 } });
+  const res = await fetch('https://admin.kimorojo.ir/api/products', { next: { revalidate: 60 } });
   if (!res.ok) return [];
   const data = await res.json();
   return data.data || [];

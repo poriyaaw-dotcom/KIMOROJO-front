@@ -50,9 +50,9 @@ export default function ShopAllPage() {
       try {
         // <-- ADDED SETTINGS FETCH
         const [productsRes, categoriesRes, settingsRes] = await Promise.all([
-          fetch('http://https://api.kimorojo.com/api/products'),
-          fetch('http://https://api.kimorojo.com/api/categories'),
-          fetch('http://https://api.kimorojo.com/api/settings')
+          fetch('https://admin.kimorojo.ir/api/products'),
+          fetch('https://admin.kimorojo.ir/api/categories'),
+          fetch('https://admin.kimorojo.ir/api/settings')
         ]);
         
         const productsData = await productsRes.json();
@@ -195,8 +195,8 @@ export default function ShopAllPage() {
                   const itemName = isFarsi ? product.name_fa : product.name_en;
                   const price = getProductPrice(product);
                   
-                  const mainImage = product.images && product.images.length > 0 ? `http://https://api.kimorojo.com/storage/${product.images[0]}` : null;
-                  const hoverImage = product.images && product.images.length > 1 ? `http://https://api.kimorojo.com/storage/${product.images[1]}` : null;
+                  const mainImage = product.images && product.images.length > 0 ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : null;
+                  const hoverImage = product.images && product.images.length > 1 ? `https://admin.kimorojo.ir/storage/${product.images[1]}` : null;
                   
                   return (
                     <ProductCard 

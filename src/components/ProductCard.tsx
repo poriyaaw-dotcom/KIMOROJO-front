@@ -15,7 +15,7 @@ interface ProductCardProps {
 const getImageUrl = (imgPath: string) => {
   if (!imgPath) return 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
   if (imgPath.startsWith('http')) return imgPath;
-  return `http://https://api.kimorojo.com/storage/${imgPath}`;
+  return `https://admin.kimorojo.ir/storage/${imgPath}`;
 };
 
 export default function ProductCard({ id, name, price, image, hoverImage, category }: ProductCardProps) {

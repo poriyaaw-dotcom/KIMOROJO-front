@@ -44,7 +44,7 @@ export default function CollectionClient({
   // --- FETCH SETTINGS FROM ADMIN PANEL ---
   const [settings, setSettings] = useState<any>(null);
   useEffect(() => {
-    fetch('http://https://api.kimorojo.com/api/settings')
+    fetch('https://admin.kimorojo.ir/api/settings')
       .then(res => res.json())
       .then(data => setSettings(data.data || data))
       .catch(err => console.error("Failed to fetch settings", err));
@@ -62,7 +62,7 @@ export default function CollectionClient({
   };
 
   const collectionName = isFarsi ? collection.name_fa : collection.name_en;
-  const collectionImage = collection.image ? `http://https://api.kimorojo.com/storage/${collection.image}` : null;
+  const collectionImage = collection.image ? `https://admin.kimorojo.ir/storage/${collection.image}` : null;
 
   return (
     <div dir={isFarsi ? 'rtl' : 'ltr'}>
@@ -98,8 +98,8 @@ export default function CollectionClient({
               const itemName = isFarsi ? product.name_fa : product.name_en;
               const price = getProductPrice(product);
               
-              const mainImage = product.images && product.images.length > 0 ? `http://https://api.kimorojo.com/storage/${product.images[0]}` : null;
-              const hoverImage = product.images && product.images.length > 1 ? `http://https://api.kimorojo.com/storage/${product.images[1]}` : null;
+              const mainImage = product.images && product.images.length > 0 ? `https://admin.kimorojo.ir/storage/${product.images[0]}` : null;
+              const hoverImage = product.images && product.images.length > 1 ? `https://admin.kimorojo.ir/storage/${product.images[1]}` : null;
               
               return (
                 <ProductCard 

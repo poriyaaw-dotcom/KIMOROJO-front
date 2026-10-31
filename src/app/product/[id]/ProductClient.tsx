@@ -60,7 +60,7 @@ export default function ProductClient({
   
   // FIXED: Removed the broken "http://https://"
   const images = product.images && product.images.length > 0 
-    ? product.images.map(img => `https://api.kimorojo.com/storage/${img}`)
+    ? product.images.map(img => `https://admin.kimorojo.ir/storage/${img}`)
     : ['https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=800&q=80'];
 
   // --- USE CENTRALIZED PRICING FUNCTION ---
@@ -318,7 +318,7 @@ export default function ProductClient({
               
               // FIXED: Removed the broken "http://https://"
               const relImage = relProduct.images && relProduct.images.length > 0 
-                ? `https://api.kimorojo.com/storage/${relProduct.images[0]}` 
+                ? `https://admin.kimorojo.ir/storage/${relProduct.images[0]}` 
                 : '';
               
               return (

@@ -4,7 +4,7 @@ const BASE_URL = 'http://localhost:3000'; // Change to your real domain later
 
 async function fetchData(endpoint: string) {
   try {
-    const res = await fetch(`http://https://api.kimorojo.com/api/${endpoint}`, { next: { revalidate: 3600 } });
+    const res = await fetch(`https://admin.kimorojo.ir/api/${endpoint}`, { next: { revalidate: 3600 } });
     const data = await res.json();
     return data.data || [];
   } catch {

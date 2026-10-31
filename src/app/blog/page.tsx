@@ -22,7 +22,7 @@ export default function BlogPage() {
   useEffect(() => {
     const fetchBlogs = async () => {
       try {
-        const res = await fetch('http://https://api.kimorojo.com/api/blogs');
+        const res = await fetch('https://admin.kimorojo.ir/api/blogs');
         const data = await res.json();
         setBlogs(data.data || []);
       } catch (error) {
@@ -60,7 +60,7 @@ export default function BlogPage() {
             <Link key={blog.id} href={`/blog/${blog.slug}`} className="group block bg-white border border-gray-100 rounded-sm overflow-hidden hover:shadow-lg transition-shadow">
               {blog.image && (
                 <div className="aspect-video overflow-hidden">
-                  <img src={`http://https://api.kimorojo.com/storage/${blog.image}`} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  <img src={`https://admin.kimorojo.ir/storage/${blog.image}`} alt={blog.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                 </div>
               )}
               <div className="p-6">

@@ -72,7 +72,7 @@ export default function CheckoutPage() {
     }
 
     // Fetch settings
-    fetch('http://https://api.kimorojo.com/api/settings')
+    fetch('https://admin.kimorojo.ir/api/settings')
       .then(res => res.json())
       .then(data => setSettings(data.data || data))
       .catch(err => console.error("Failed to fetch settings", err));
@@ -85,7 +85,7 @@ export default function CheckoutPage() {
           return;
         }
 
-        const res = await fetch('http://https://api.kimorojo.com/api/products');
+        const res = await fetch('https://admin.kimorojo.ir/api/products');
         const data = await res.json();
         const allProducts = data.data || [];
 
@@ -97,7 +97,7 @@ export default function CheckoutPage() {
 
         setCartItems(mergedCart);
 
-        const addrRes = await fetch('http://https://api.kimorojo.com/api/addresses', {
+        const addrRes = await fetch('https://admin.kimorojo.ir/api/addresses', {
           headers: {
             'Authorization': `Bearer ${authToken}`,
             'Accept': 'application/json'
@@ -185,7 +185,7 @@ export default function CheckoutPage() {
           is_default: savedAddresses.length === 0
         };
 
-        const addrRes = await fetch('http://https://api.kimorojo.com/api/addresses', {
+        const addrRes = await fetch('https://admin.kimorojo.ir/api/addresses', {
           method: 'POST',
           headers: getHeaders(authToken),
           body: JSON.stringify(addressPayload)
@@ -214,7 +214,7 @@ export default function CheckoutPage() {
         total
       };
 
-      const orderRes = await fetch('http://https://api.kimorojo.com/api/orders', {
+      const orderRes = await fetch('https://admin.kimorojo.ir/api/orders', {
         method: 'POST',
         headers: getHeaders(authToken),
         body: JSON.stringify(orderPayload)
