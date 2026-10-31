@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom'; // <-- Added for Portal
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User, Menu, X } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
@@ -66,6 +67,63 @@ export default function Header() {
     };
     fetchData();
   }, []);
+
+  // The Drawer Component (to be rendered via Portal)
+  const MobileDrawer = (
+    <div className="fixed inset-0 z-[9999] md:hidden">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+      
+      {/* Drawer Panel - Slides from Right */}
+      <div className="absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl flex flex-col z-[10000]">
+        <div className="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
+          <h2 className="font-serif text-xl font-bold text-[#682535]">KIMOROJO</h2>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-black">
+            <X className="w-6 h-6" />
+          </button>
+        </div>
+        
+        <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+          {/* Language Switch */}
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => { setLang('en'); setIsMobileMenuOpen(false); }}
+              className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'en' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
+            >
+              English
+            </button>
+            <button 
+              onClick={() => { setLang('fa'); setIsMobileMenuOpen(false); }}
+              className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'fa' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
+              style={{ fontFamily: 'var(--font-vazir)' }}
+            >
+              فارسی
+            </button>
+          </div>
+
+          {/* Navigation Links */}
+          <nav className="flex flex-col space-y-4 text-base font-medium text-gray-700">
+            <Link href="/custom-order" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+              {isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}
+            </Link>
+            <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+              {t('about')}
+            </Link>
+            <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+              {t('contact')}
+            </Link>
+            <Link href="/blog" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+              {isFarsi ? 'وبلاگ' : 'Blog'}
+            </Link>
+            <Link href={isLoggedIn ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors flex items-center gap-2">
+              <User className="w-5 h-5" />
+              {isLoggedIn ? (isFarsi ? 'حساب کاربری' : 'My Account') : (isFarsi ? 'ورود / ثبت‌نام' : 'Login / Register')}
+            </Link>
+          </nav>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
@@ -211,62 +269,8 @@ export default function Header() {
         </div>
       </div>
 
-      {/* MOBILE: Hamburger Menu Drawer (Fixed Z-Index and Background) */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-[9999] md:hidden">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-          
-          {/* Drawer Panel - Slides from Right */}
-          <div className="absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl flex flex-col z-[10000]">
-            <div className="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
-              <h2 className="font-serif text-xl font-bold text-[#682535]">KIMOROJO</h2>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-black">
-                <X className="w-6 h-6" />
-              </button>
-            </div>
-            
-            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-              {/* Language Switch */}
-              <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => { setLang('en'); setIsMobileMenuOpen(false); }}
-                  className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'en' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
-                >
-                  English
-                </button>
-                <button 
-                  onClick={() => { setLang('fa'); setIsMobileMenuOpen(false); }}
-                  className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'fa' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
-                  style={{ fontFamily: 'var(--font-vazir)' }}
-                >
-                  فارسی
-                </button>
-              </div>
-
-              {/* Navigation Links */}
-              <nav className="flex flex-col space-y-4 text-base font-medium text-gray-700">
-                <Link href="/custom-order" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
-                  {isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}
-                </Link>
-                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
-                  {t('about')}
-                </Link>
-                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
-                  {t('contact')}
-                </Link>
-                <Link href="/blog" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
-                  {isFarsi ? 'وبلاگ' : 'Blog'}
-                </Link>
-                <Link href={isLoggedIn ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors flex items-center gap-2">
-                  <User className="w-5 h-5" />
-                  {isLoggedIn ? (isFarsi ? 'حساب کاربری' : 'My Account') : (isFarsi ? 'ورود / ثبت‌نام' : 'Login / Register')}
-                </Link>
-              </nav>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* MOBILE: Drawer rendered via Portal to ensure it covers everything */}
+      {isMobileMenuOpen && typeof document !== 'undefined' && createPortal(MobileDrawer, document.body)}
     </header>
   );
 }
