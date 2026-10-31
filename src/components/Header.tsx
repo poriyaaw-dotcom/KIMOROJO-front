@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Search, ShoppingBag, Heart, User } from 'lucide-react';
+import { Search, ShoppingBag, Heart, User, Menu, X } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
 import { useCart } from '@/context/CartContext';
 
@@ -25,8 +25,9 @@ export default function Header() {
   const { lang, setLang, t } = useLang();
   const { cartCount } = useCart();
   const router = useRouter();
-  const pathname = usePathname(); // Tracks URL changes
+  const pathname = usePathname();
   const [isShopOpen, setIsShopOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [collections, setCollections] = useState<Collection[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
@@ -35,22 +36,17 @@ export default function Header() {
   
   const hoverTimeout = useRef<NodeJS.Timeout | null>(null);
 
-  // Re-checks login status every time the user navigates to a new page
   useEffect(() => {
     setIsLoggedIn(!!localStorage.getItem('kimorojo_user_phone'));
   }, [pathname]);
 
   const handleMouseEnter = () => {
-    if (hoverTimeout.current) {
-      clearTimeout(hoverTimeout.current);
-    }
+    if (hoverTimeout.current) clearTimeout(hoverTimeout.current);
     setIsShopOpen(true);
   };
 
   const handleMouseLeave = () => {
-    hoverTimeout.current = setTimeout(() => {
-      setIsShopOpen(false);
-    }, 200);
+    hoverTimeout.current = setTimeout(() => setIsShopOpen(false), 200);
   };
 
   useEffect(() => {
@@ -73,21 +69,35 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      <div className="max-w-7xl mx-auto px-6 h-20 relative">
-        <div className="grid grid-cols-2 h-full items-center">
-          
-          {/* LEFT: Search & Language */}
-          <div className="flex items-center justify-start gap-4">
-            <div className="relative w-48 hidden md:block">
-              <form 
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  if (searchQuery.trim()) {
-                    router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
-                  }
-                }}
-                className="relative"
-              >
+      {/* Main Header Container */}
+      <div className="max-w-7xl mx-auto px-4 h-20 relative flex justify-between items-center">
+        
+        {/* LEFT SIDE: Search (Mobile & Desktop) */}
+        <div className="flex items-center gap-2 z-20 w-1/3">
+          {/* Mobile Search Bar */}
+          <div className="md:hidden relative flex-1 max-w-[140px]">
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (searchQuery.trim()) router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+            }}>
+              <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder={t('searchPlaceholder')} 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-2 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-xs focus:outline-none focus:border-black transition-colors"
+              />
+            </form>
+          </div>
+
+          {/* Desktop Search & Language (Unchanged) */}
+          <div className="hidden md:flex items-center gap-4">
+            <div className="relative w-48">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (searchQuery.trim()) router.push(`/search?q=${encodeURIComponent(searchQuery)}`);
+              }} className="relative">
                 <Search className={`absolute top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4 ${isFarsi ? 'right-3' : 'left-3'}`} />
                 <input 
                   type="text" 
@@ -101,36 +111,27 @@ export default function Header() {
                 />
               </form>
             </div>
-            <Search className="md:hidden text-gray-700 w-5 h-5" />
-
             <div className="flex items-center gap-1 text-xs font-medium text-gray-500">
-              <button 
-                onClick={() => setLang('en')}
-                className={`px-2 py-1 border rounded transition-colors ${lang === 'en' ? 'bg-black text-white border-black' : 'border-gray-200 hover:bg-gray-100'}`}
-              >
-                EN
-              </button>
-              <button 
-                onClick={() => setLang('fa')}
-                className={`px-2 py-1 border rounded transition-colors ${lang === 'fa' ? 'bg-black text-white border-black' : 'border-gray-200 hover:bg-gray-100'}`}
-                style={{ fontFamily: 'var(--font-vazir)' }}
-              >
-                FA
-              </button>
+              <button onClick={() => setLang('en')} className={`px-2 py-1 border rounded transition-colors ${lang === 'en' ? 'bg-black text-white border-black' : 'border-gray-200 hover:bg-gray-100'}`}>EN</button>
+              <button onClick={() => setLang('fa')} className={`px-2 py-1 border rounded transition-colors ${lang === 'fa' ? 'bg-black text-white border-black' : 'border-gray-200 hover:bg-gray-100'}`} style={{ fontFamily: 'var(--font-vazir)' }}>FA</button>
             </div>
           </div>
+        </div>
 
-          {/* RIGHT: Nav & Icons */}
-          <div className="flex items-center justify-end gap-6">
-            <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-gray-600">
-              <div 
-                className="relative"
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-              >
-                <Link href="/shop" className={`hover:text-black transition-colors py-2 ${isShopOpen ? 'text-black underline underline-offset-8 decoration-1' : ''}`}>
-                  {t('shop')}
-                </Link>
+        {/* CENTER: Logo (Unchanged) */}
+        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
+          <Link href="/" className="hover:opacity-80 transition-opacity block">
+            <img src="/images/logo.png" alt="KIMOROJO" className="h-[80px] md:h-[100px] w-auto object-contain" />
+          </Link>
+        </div>
+
+        {/* RIGHT SIDE: Nav & Burger */}
+        <div className="flex items-center justify-end gap-4 z-20 w-1/3">
+          {/* Desktop Nav & Icons (Unchanged) */}
+          <div className="hidden md:flex items-center gap-6">
+            <nav className="flex items-center gap-5 text-sm font-medium text-gray-600">
+              <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                <Link href="/shop" className={`hover:text-black transition-colors py-2 ${isShopOpen ? 'text-black underline underline-offset-8 decoration-1' : ''}`}>{t('shop')}</Link>
               </div>
               <Link href="/blog" className="hover:text-black transition-colors">{isFarsi ? 'وبلاگ' : 'Blog'}</Link>
               <Link href="/contact" className="hover:text-black transition-colors">{t('contact')}</Link>
@@ -140,43 +141,31 @@ export default function Header() {
             <div className="flex items-center gap-4 text-gray-700">
               <Link href="/cart" className="relative hover:text-black transition-colors" aria-label={t('cart')}>
                 <ShoppingBag className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-[#682535] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">
-                    {cartCount}
-                  </span>
-                )}
+                {cartCount > 0 && <span className="absolute -top-1 -right-1 bg-[#682535] text-white text-[10px] font-bold w-4 h-4 flex items-center justify-center rounded-full">{cartCount}</span>}
               </Link>
-              
               <Link href="/favorites" className="hover:text-black transition-colors" aria-label={t('favorites')}>
                 <Heart className="w-5 h-5" />
               </Link>
-              
-              <Link 
-                href={isLoggedIn ? "/account" : "/login"} 
-                className="hover:text-black transition-colors flex items-center gap-2" 
-                aria-label={t('profile')}
-              >
+              <Link href={isLoggedIn ? "/account" : "/login"} className="hover:text-black transition-colors flex items-center gap-2" aria-label={t('profile')}>
                 <User className="w-5 h-5" />
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* CENTER: Logo */}
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
-          <Link href="/" className="hover:opacity-80 transition-opacity block">
-            <img 
-              src="/images/logo.png" 
-              alt="KIMOROJO" 
-              className="h-[100px] w-auto object-contain"
-            />
-          </Link>
+          {/* Mobile Hamburger Menu Button */}
+          <button 
+            onClick={() => setIsMobileMenuOpen(true)}
+            className="md:hidden text-gray-700 p-2 hover:text-[#682535] transition-colors"
+            aria-label="Open menu"
+          >
+            <Menu className="w-6 h-6" />
+          </button>
         </div>
       </div>
 
-      {/* Full-Width Mega Menu Dropdown */}
+      {/* DESKTOP: Full-Width Mega Menu Dropdown (Unchanged) */}
       <div 
-        className={`absolute top-full left-0 right-0 w-full bg-white border-t border-gray-100 shadow-lg overflow-hidden transition-all duration-500 ease-in-out ${
+        className={`hidden md:block absolute top-full left-0 right-0 w-full bg-white border-t border-gray-100 shadow-lg overflow-hidden transition-all duration-500 ease-in-out ${
           isShopOpen ? 'max-h-[500px] opacity-100 visible' : 'max-h-0 opacity-0 invisible'
         }`}
         dir={isFarsi ? 'rtl' : 'ltr'}
@@ -186,9 +175,7 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
-                {t('jewelry')}
-              </h4>
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">{t('jewelry')}</h4>
               <ul className="space-y-3">
                 {categories.map((cat) => (
                   <li key={cat.id}>
@@ -199,11 +186,8 @@ export default function Header() {
                 ))}
               </ul>
             </div>
-
             <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
-                {t('collectionsHeading')}
-              </h4>
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">{t('collectionsHeading')}</h4>
               <ul className="space-y-3">
                 {collections.map((col) => (
                   <li key={col.id}>
@@ -214,11 +198,8 @@ export default function Header() {
                 ))}
               </ul>
             </div>
-
             <div>
-              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">
-                {t('giftShop')}
-              </h4>
+              <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">{t('giftShop')}</h4>
               <ul className="space-y-3">
                 <li><Link href="/gifts/all" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('allGifts')}</Link></li>
                 <li><Link href="/gifts/charms" className="text-sm text-gray-600 hover:text-black transition-colors block">{t('personalisedCharms')}</Link></li>
@@ -229,6 +210,63 @@ export default function Header() {
           </div>
         </div>
       </div>
+
+      {/* MOBILE: Hamburger Menu Drawer (Fixed Z-Index and Background) */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-[9999] md:hidden">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
+          
+          {/* Drawer Panel - Slides from Right */}
+          <div className="absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl flex flex-col z-[10000]">
+            <div className="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
+              <h2 className="font-serif text-xl font-bold text-[#682535]">KIMOROJO</h2>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-black">
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
+              {/* Language Switch */}
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => { setLang('en'); setIsMobileMenuOpen(false); }}
+                  className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'en' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
+                >
+                  English
+                </button>
+                <button 
+                  onClick={() => { setLang('fa'); setIsMobileMenuOpen(false); }}
+                  className={`flex-1 py-2 border rounded text-sm font-medium transition-colors ${lang === 'fa' ? 'bg-black text-white border-black' : 'border-gray-200 text-gray-600'}`}
+                  style={{ fontFamily: 'var(--font-vazir)' }}
+                >
+                  فارسی
+                </button>
+              </div>
+
+              {/* Navigation Links */}
+              <nav className="flex flex-col space-y-4 text-base font-medium text-gray-700">
+                <Link href="/custom-order" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+                  {isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}
+                </Link>
+                <Link href="/about" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+                  {t('about')}
+                </Link>
+                <Link href="/contact" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+                  {t('contact')}
+                </Link>
+                <Link href="/blog" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
+                  {isFarsi ? 'وبلاگ' : 'Blog'}
+                </Link>
+                <Link href={isLoggedIn ? "/account" : "/login"} onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors flex items-center gap-2">
+                  <User className="w-5 h-5" />
+                  {isLoggedIn ? (isFarsi ? 'حساب کاربری' : 'My Account') : (isFarsi ? 'ورود / ثبت‌نام' : 'Login / Register')}
+                </Link>
+              </nav>
+            </div>
+          </div>
+        </div>
+      )}
     </header>
   );
 }
