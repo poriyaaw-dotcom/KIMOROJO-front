@@ -24,7 +24,6 @@ export function calculateProductPrice(
   const goldPrice = settings ? Number(settings.gold_price) : 26000000;
   const silverPrice = settings ? Number(settings.silver_price) : 4900000;
   
-  // FIX: اگر ادمین عدد 9 وارد کرده، آن را به 0.09 تبدیل می‌کند. اگر اعشاری (مثل 0.1) وارد کرده، همان را نگه می‌دارد.
   const rawProfit = Number(settings?.seller_profit ?? 7);
   const profitRate = rawProfit > 1 ? rawProfit / 100 : rawProfit;
 
@@ -50,12 +49,17 @@ export function calculateProductPrice(
   const metalProfit = (baseMetalValue + metalMakingCharges) * profitRate;
   const totalProfit = metalProfit + accProfit;
 
-  let vatTotal = 0;
-  if (applyTax) {
-    vatTotal = (totalMakingCharges + totalProfit + accBase) * taxRate;
-  } else {
-    vatTotal = (metalMakingCharges + metalProfit) * taxRate;
-  }
+  // --- FIXED VAT CALCULATION ---
+  // 1. VAT on Metal (Making Charges + Profit)
+  const metalVat = (metalMakingCharges + metalProfit) * taxRate;
+
+  // 2. VAT on Accessories Making Charges + Profit (ALWAYS applied)
+  const accVatOnServices = (accMakingCharges + accProfit) * taxRate;
+
+  // 3. VAT on Accessories Base Price (ONLY if toggle is ON)
+  const accVatOnBase = applyTax ? (accBase * taxRate) : 0;
+
+  const vatTotal = metalVat + accVatOnServices + accVatOnBase;
 
   return baseMetalValue + accBase + totalMakingCharges + totalProfit + vatTotal;
 }
