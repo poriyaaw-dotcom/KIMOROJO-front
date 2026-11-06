@@ -35,8 +35,6 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
         const res = await fetch('https://admin.kimorojo.ir/api/products');
         const data = await res.json();
         const allProducts = data.data || [];
-        
-        // This now correctly uses the 'slug' prop passed from page.tsx
         const filtered = allProducts.filter((p: Product) => p.category?.slug === slug);
         setProducts(filtered);
       } catch (error) {
@@ -49,7 +47,6 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
     fetchProducts();
   }, [slug]);
 
-  // FIX: Dynamic locale based on language
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
     return new Intl.NumberFormat(locale).format(amount) + ' ' + (isFarsi ? 'تومان' : 'Toman');
@@ -64,7 +61,8 @@ export default function CategoryRow({ nameEn, nameFa, slug }: CategoryRowProps) 
   }
 
   return (
-    <section className="py-12 px-6 max-w-7xl mx-auto" dir={isFarsi ? 'rtl' : 'ltr'}>
+    // FIXED: Replaced max-w-7xl mx-auto with responsive full-width padding
+    <section className="py-12 w-full px-6 md:px-12 xl:px-24" dir={isFarsi ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl md:text-3xl font-serif text-gray-900">
           {isFarsi ? nameFa : nameEn}

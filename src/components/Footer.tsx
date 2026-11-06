@@ -27,8 +27,10 @@ export default function Footer() {
   }, []);
 
   return (
-    <footer className="bg-gray-50 border-t border-gray-100 pt-16 pb-8" dir={isFarsi ? 'rtl' : 'ltr'}>
-      <div className="max-w-7xl mx-auto px-6">
+    // FIXED: Added pb-20 md:pb-8 to lift the footer above the mobile bottom nav ONLY on mobile
+    <footer className="bg-gray-50 border-t border-gray-100 pt-16 pb-20 md:pb-8" dir={isFarsi ? 'rtl' : 'ltr'}>
+      {/* FIXED: Replaced max-w-7xl mx-auto with responsive full-width padding */}
+      <div className="w-full px-6 md:px-12 xl:px-24">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-4">
             <Link href="/" className="flex justify-center md:justify-start">
