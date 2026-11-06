@@ -5,7 +5,7 @@ import { FavoritesProvider } from "@/context/FavoritesContext";
 import { CartProvider } from "@/context/CartContext";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import MobileBottomNav from "@/components/MobileBottomNav"; // <-- Added Mobile Nav
+import MobileBottomNav from "@/components/MobileBottomNav";
 
 export const metadata: Metadata = {
   title: "KIMOROJO | Premium Jewelry",
@@ -18,7 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    // CHANGED: Added lang="fa" and dir="rtl" for default Farsi layout
+    <html lang="fa" dir="rtl">
       <body className="font-sans antialiased flex flex-col min-h-screen">
         <LanguageProvider>
           <FavoritesProvider>
@@ -28,7 +29,7 @@ export default function RootLayout({
                 {children}
               </main>
               <Footer />
-              <MobileBottomNav /> {/* <-- Added here, right before closing body */}
+              <MobileBottomNav />
             </CartProvider>
           </FavoritesProvider>
         </LanguageProvider>

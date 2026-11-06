@@ -284,9 +284,10 @@ const translations = {
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [lang, setLangState] = useState<Lang>('en');
+  // CHANGED: Default language is now 'fa' (Farsi)
+  const [lang, setLangState] = useState<Lang>('fa');
 
-  // Load language from cookie on first render
+  // Load language from cookie on first render (respects user's choice if they switch)
   useEffect(() => {
     const savedLang = getCookie('lang') as Lang;
     if (savedLang === 'en' || savedLang === 'fa') {
