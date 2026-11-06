@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { useEffect, useState } from 'react';
 import { calculateProductPrice } from '@/utils/calculatePrice';
-import { getSafeFirstImage } from '@/utils/imageHelper'; // <-- ADDED
+import { getSafeFirstImage } from '@/utils/imageHelper';
 
 interface Product {
   id: number;
@@ -18,7 +18,7 @@ interface Product {
   accessories_making_charges?: number;
   accessories_profit?: number;
   apply_tax_on_accessories?: boolean;
-  images: string[] | string | null; // <-- UPDATED
+  images: string[] | string | null;
   category: { slug: string; name_en: string; name_fa: string } | null;
 }
 
@@ -75,7 +75,8 @@ export default function NewInSlider() {
   const title = isFarsi ? 'تازه‌های فروشگاه' : 'New In';
 
   return (
-    <section className="py-12 px-6 max-w-7xl mx-auto" dir={isFarsi ? 'rtl' : 'ltr'}>
+    // FIXED: Replaced max-w-7xl mx-auto with responsive full-width padding
+    <section className="py-12 w-full px-6 md:px-12 xl:px-24" dir={isFarsi ? 'rtl' : 'ltr'}>
       <div className="flex justify-between items-center mb-8">
         <h2 className="text-2xl md:text-3xl font-serif text-gray-900">{title}</h2>
         <Link href={`/shop`} className="text-sm font-medium text-gray-500 hover:text-black transition-colors uppercase tracking-wider">
@@ -88,8 +89,6 @@ export default function NewInSlider() {
           {products.map((product) => {
             const itemName = isFarsi ? product.name_fa : product.name_en;
             const itemPrice = getItemPrice(product);
-            
-            // SAFE IMAGE PARSING
             const itemImage = getSafeFirstImage(product.images) || 'https://images.unsplash.com/photo-1605100804763-247f67b2548e?auto=format&fit=crop&w=400&q=80';
 
             return (

@@ -3,75 +3,81 @@
 import Link from 'next/link';
 import { useLang } from '@/context/LanguageContext';
 import { useEffect, useState } from 'react';
-import { getSafeFirstImage } from '@/utils/imageHelper'; // <-- ADDED
 
 interface Collection {
   id: number;
   name_en: string;
   name_fa: string;
   slug: string;
-  image?: string | string[] | null; // <-- UPDATED
+  image?: string | string[] | null;
 }
 
+const fallbackImage = 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?auto=format&fit=crop&w=600&q=80';
+
+// Helper to safely get the first image
+const getSafeFirstImage = (image: string | string[] | null | undefined): string => {
+  if (!image) return fallbackImage;
+  if (Array.isArray(image)) return image[0] || fallbackImage;
+  return image || fallbackImage;
+};
+
 export default function CollectionsGrid() {
-  const { t, lang } = useLang();
+  const { lang } = useLang();
   const isFarsi = lang === 'fa';
   const [collections, setCollections] = useState<Collection[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('https://admin.kimorojo.ir/api/collections')
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchCollections = async () => {
+      try {
+        const res = await fetch('https://admin.kimorojo.ir/api/collections');
+        const data = await res.json();
         setCollections(data.data || []);
         setLoading(false);
-      })
-      .catch((err) => {
-        console.error("Failed to fetch collections", err);
+      } catch (error) {
+        console.error("Failed to fetch collections:", error);
         setLoading(false);
-      });
+      }
+    };
+
+    fetchCollections();
   }, []);
 
   if (loading) {
-    return (
-      <section className="max-w-7xl mx-auto px-6 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
-        <h2 className={`text-3xl md:text-4xl text-center mb-12 text-gray-900 ${isFarsi ? 'font-normal' : 'font-serif uppercase tracking-widest'}`}>
-          {t('collections')}
-        </h2>
-        <div className="text-center text-gray-500">
-          {isFarsi ? 'در حال بارگذاری...' : 'Loading collections...'}
-        </div>
-      </section>
-    );
+    return <div className="py-20 text-center text-gray-500">{isFarsi ? 'در حال بارگذاری...' : 'Loading...'}</div>;
+  }
+
+  if (collections.length === 0) {
+    return null;
   }
 
   return (
-    <section className="max-w-7xl mx-auto px-6 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
-      <h2 className={`text-3xl md:text-4xl text-center mb-12 text-gray-900 ${isFarsi ? 'font-normal' : 'font-serif uppercase tracking-widest'}`}>
-        {t('collections')}
+    // FIXED: Replaced max-w-7xl mx-auto with w-full and responsive padding
+    <section className="w-full px-6 md:px-12 xl:px-24 py-20" dir={isFarsi ? 'rtl' : 'ltr'}>
+      <h2 className="text-2xl md:text-3xl font-serif text-gray-900 mb-12 text-center">
+        {isFarsi ? 'مجموعه‌های ما' : 'Our Collections'}
       </h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
+
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
         {collections.map((collection) => {
           const name = isFarsi ? collection.name_fa : collection.name_en;
-          
-          // SAFE IMAGE PARSING
-          const image = getSafeFirstImage(collection.image) || "https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?auto=format&fit=crop&w=800&q=80";
+          const image = getSafeFirstImage(collection.image);
 
           return (
             <Link 
               href={`/collections/${collection.slug}`} 
               key={collection.id}
-              className="group relative aspect-[4/3] overflow-hidden rounded-sm cursor-pointer"
+              className="group relative aspect-[4/5] overflow-hidden rounded-sm cursor-pointer"
             >
               <img 
                 src={image} 
                 alt={name} 
-                className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-500 ease-in-out group-hover:scale-105"
+                className="w-full h-full object-cover transition-all duration-700 ease-in-out grayscale group-hover:grayscale-0 group-hover:scale-105"
               />
-              <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-4 text-center transition-all duration-300 group-hover:bg-black/80">
+              <div className="absolute inset-0 bg-black/40 group-hover:bg-black/20 transition-all duration-500" />
+              <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
                 <span 
-                  className={`text-white text-xl md:text-2xl ${isFarsi ? 'font-normal' : 'font-serif tracking-widest'}`}
+                  className={`text-white text-xl ${isFarsi ? 'font-normal' : 'font-serif tracking-widest'}`}
                   style={{ textTransform: isFarsi ? 'none' : 'uppercase' }}
                 >
                   {name}

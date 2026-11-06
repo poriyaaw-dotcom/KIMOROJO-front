@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useState, useRef, useEffect } from 'react';
-import { createPortal } from 'react-dom'; // <-- Added for Portal
+import { createPortal } from 'react-dom';
 import { useRouter, usePathname } from 'next/navigation';
 import { Search, ShoppingBag, Heart, User, Menu, X } from 'lucide-react';
 import { useLang } from '@/context/LanguageContext';
@@ -68,13 +68,9 @@ export default function Header() {
     fetchData();
   }, []);
 
-  // The Drawer Component (to be rendered via Portal)
   const MobileDrawer = (
     <div className="fixed inset-0 z-[9999] md:hidden">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setIsMobileMenuOpen(false)} />
-      
-      {/* Drawer Panel - Slides from Right */}
       <div className="absolute top-0 right-0 h-full w-3/4 max-w-sm bg-white shadow-2xl flex flex-col z-[10000]">
         <div className="p-6 flex items-center justify-between border-b border-gray-100 bg-white">
           <h2 className="font-serif text-xl font-bold text-[#682535]">KIMOROJO</h2>
@@ -82,9 +78,7 @@ export default function Header() {
             <X className="w-6 h-6" />
           </button>
         </div>
-        
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-white">
-          {/* Language Switch */}
           <div className="flex items-center gap-2">
             <button 
               onClick={() => { setLang('en'); setIsMobileMenuOpen(false); }}
@@ -100,8 +94,6 @@ export default function Header() {
               فارسی
             </button>
           </div>
-
-          {/* Navigation Links */}
           <nav className="flex flex-col space-y-4 text-base font-medium text-gray-700">
             <Link href="/custom-order" onClick={() => setIsMobileMenuOpen(false)} className="hover:text-[#682535] transition-colors">
               {isFarsi ? 'سفارش اختصاصی' : 'Custom Order'}
@@ -127,12 +119,10 @@ export default function Header() {
 
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100">
-      {/* Main Header Container */}
-      <div className="max-w-7xl mx-auto px-4 h-20 relative flex justify-between items-center">
+      {/* FIXED: Replaced max-w-7xl mx-auto with responsive full-width padding */}
+      <div className="w-full px-4 md:px-12 xl:px-24 h-20 relative flex justify-between items-center">
         
-        {/* LEFT SIDE: Search (Mobile & Desktop) */}
         <div className="flex items-center gap-2 z-20 w-1/3">
-          {/* Mobile Search Bar */}
           <div className="md:hidden relative flex-1 max-w-[140px]">
             <form onSubmit={(e) => {
               e.preventDefault();
@@ -149,7 +139,6 @@ export default function Header() {
             </form>
           </div>
 
-          {/* Desktop Search & Language (Unchanged) */}
           <div className="hidden md:flex items-center gap-4">
             <div className="relative w-48">
               <form onSubmit={(e) => {
@@ -176,16 +165,13 @@ export default function Header() {
           </div>
         </div>
 
-        {/* CENTER: Logo (Unchanged) */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <Link href="/" className="hover:opacity-80 transition-opacity block">
             <img src="/images/logo.png" alt="KIMOROJO" className="h-[80px] md:h-[100px] w-auto object-contain" />
           </Link>
         </div>
 
-        {/* RIGHT SIDE: Nav & Burger */}
         <div className="flex items-center justify-end gap-4 z-20 w-1/3">
-          {/* Desktop Nav & Icons (Unchanged) */}
           <div className="hidden md:flex items-center gap-6">
             <nav className="flex items-center gap-5 text-sm font-medium text-gray-600">
               <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
@@ -210,7 +196,6 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Mobile Hamburger Menu Button */}
           <button 
             onClick={() => setIsMobileMenuOpen(true)}
             className="md:hidden text-gray-700 p-2 hover:text-[#682535] transition-colors"
@@ -221,7 +206,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* DESKTOP: Full-Width Mega Menu Dropdown (Unchanged) */}
       <div 
         className={`hidden md:block absolute top-full left-0 right-0 w-full bg-white border-t border-gray-100 shadow-lg overflow-hidden transition-all duration-500 ease-in-out ${
           isShopOpen ? 'max-h-[500px] opacity-100 visible' : 'max-h-0 opacity-0 invisible'
@@ -230,7 +214,8 @@ export default function Header() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
       >
-        <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* FIXED: Replaced max-w-7xl mx-auto with responsive full-width padding */}
+        <div className="w-full px-6 md:px-12 xl:px-24 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <h4 className="font-serif text-sm uppercase tracking-widest text-[#682535] mb-4">{t('jewelry')}</h4>
@@ -269,7 +254,6 @@ export default function Header() {
         </div>
       </div>
 
-      {/* MOBILE: Drawer rendered via Portal to ensure it covers everything */}
       {isMobileMenuOpen && typeof document !== 'undefined' && createPortal(MobileDrawer, document.body)}
     </header>
   );
