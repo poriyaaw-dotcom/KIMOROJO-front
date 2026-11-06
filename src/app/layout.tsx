@@ -19,7 +19,7 @@ export default function RootLayout({
 }) {
   return (
     // CHANGED: Added lang="fa" and dir="rtl" for default Farsi layout
-    <html lang="fa" dir="rtl">
+    <html lang="fa">
       <body className="font-sans antialiased flex flex-col min-h-screen">
         <LanguageProvider>
           <FavoritesProvider>
