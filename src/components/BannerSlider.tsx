@@ -4,14 +4,15 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// MOCK_DATA_START: Replace this array with banners fetched from the backend API
+// All 6 banner images from public folder
 const banners = [
-  { id: 1, image: "https://images.unsplash.com/photo-1535632066927-ab7c9ab60908?q=80&w=2070&auto=format&fit=crop" },
-  { id: 2, image: "https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?q=80&w=2070&auto=format&fit=crop" },
-  { id: 3, image: "https://images.unsplash.com/photo-1600721391776-b5cd0e0048f9?q=80&w=2070&auto=format&fit=crop" },
-  { id: 4, image: "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?q=80&w=2075&auto=format&fit=crop" },
+  { id: 1, image: "/images/slider-1.png" },
+  { id: 2, image: "/images/slider-2.png" },
+  { id: 3, image: "/images/slider-3.png" },
+  { id: 4, image: "/images/slider-4.png" },
+  { id: 5, image: "/images/slider-5.png" },
+  { id: 6, image: "/images/slider-6.png" },
 ];
-// MOCK_DATA_END
 
 export default function BannerSlider() {
   const [current, setCurrent] = useState(0);

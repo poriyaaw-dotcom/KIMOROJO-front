@@ -7,8 +7,8 @@ export default function HeroSection() {
   const { lang } = useLang();
   const isFarsi = lang === 'fa';
 
-  // TODO: Later, this can be fetched from a Laravel "Settings" or "Banners" API endpoint
-  const heroImage = "https://images.unsplash.com/photo-1573408301185-9146fe634ad0?q=80&w=2075&auto=format&fit=crop";
+  // Local hero image from public folder
+  const heroImage = "/images/hero-cover.png";
 
   return (
     <section className="relative w-full h-[80vh] overflow-hidden group">
@@ -16,10 +16,8 @@ export default function HeroSection() {
         <img 
           src={heroImage} 
           alt="Premium Jewelry Hero" 
-          // Fully colorful all the time, with a subtle zoom on hover
           className="w-full h-full object-cover transition-all duration-700 ease-in-out scale-100 group-hover:scale-105"
         />
-        {/* Constant soft overlay so the text stays readable even on hover */}
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/25 transition-all duration-700" />
       </div>
 
