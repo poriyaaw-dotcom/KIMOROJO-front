@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Link from 'next/link';
@@ -24,7 +24,7 @@ interface Product {
   accessories_profit?: number | string;
   apply_tax_on_accessories?: boolean | number;
   stock: number;
-  images: string[] | string | null; // Updated to allow string
+  images: string[] | string | null;
   slug: string;
   meta_title: string | null;
   meta_description: string | null;
@@ -32,7 +32,6 @@ interface Product {
   collection: { slug: string; name_en: string; name_fa: string } | null;
 }
 
-// Helper function to safely parse images whether they are a string or array
 const getSafeImages = (images: string[] | string | null | undefined): string[] => {
   if (!images) return [];
   if (Array.isArray(images)) return images;
@@ -64,6 +63,9 @@ export default function ProductClient({
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 50, y: 50 });
 
+  // Ref to attach native wheel event listener
+  const imageContainerRef = useRef<HTMLDivElement>(null);
+
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
     return new Intl.NumberFormat(locale).format(Math.round(amount)) + ' ' + (isFarsi ? 'تومان' : 'Toman');
@@ -73,7 +75,6 @@ export default function ProductClient({
   const productDesc = isFarsi ? product.description_fa : product.description_en;
   const isFav = isFavorite(product.id);
   
-  // SAFE IMAGE PARSING: Prevents server crashes if Laravel sends a JSON string
   const parsedImages = getSafeImages(product.images);
   const images = parsedImages.length > 0 
     ? parsedImages.map(img => `https://admin.kimorojo.ir/storage/${img}`)
@@ -121,12 +122,26 @@ export default function ProductClient({
     applyTax
   };
 
-  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    const delta = e.deltaY > 0 ? -0.1 : 0.1;
-    const newScale = Math.min(Math.max(scale + delta, 1), 3);
-    setScale(newScale);
-  };
+  // NATIVE WHEEL LISTENER: This is the magic fix to prevent page scroll
+  useEffect(() => {
+    const container = imageContainerRef.current;
+    if (!container) return;
+
+    const handleWheelNative = (e: WheelEvent) => {
+      e.preventDefault(); // Stops the page from scrolling
+      e.stopPropagation();
+      
+      const delta = e.deltaY > 0 ? -0.1 : 0.1;
+      setScale((prevScale) => Math.min(Math.max(prevScale + delta, 1), 3));
+    };
+
+    // { passive: false } is CRITICAL to allow e.preventDefault() on wheel events
+    container.addEventListener('wheel', handleWheelNative, { passive: false });
+
+    return () => {
+      container.removeEventListener('wheel', handleWheelNative);
+    };
+  }, []);
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (scale > 1) {
@@ -156,9 +171,10 @@ export default function ProductClient({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
         <div className="space-y-4">
+          {/* Added ref={imageContainerRef} and removed onWheel prop */}
           <div 
+            ref={imageContainerRef}
             className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative cursor-zoom-in"
-            onWheel={handleWheel}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
           >
@@ -329,7 +345,6 @@ export default function ProductClient({
               const relName = isFarsi ? relProduct.name_fa : relProduct.name_en;
               const relFinalPrice = calculateProductPrice(relProduct, settings);
               
-              // SAFE IMAGE PARSING for related products too
               const relParsedImages = getSafeImages(relProduct.images);
               const relImage = relParsedImages.length > 0 
                 ? `https://admin.kimorojo.ir/storage/${relParsedImages[0]}` 
