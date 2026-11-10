@@ -18,8 +18,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    // CHANGED: Added lang="fa" and dir="rtl" for default Farsi layout
-    <html lang="fa" dir="rtl">
+    // FIXED: Removed dir="rtl" to prevent the entire page layout (like the header) from flipping
+    <html lang="fa">
       <body className="font-sans antialiased flex flex-col min-h-screen">
         <LanguageProvider>
           <FavoritesProvider>
