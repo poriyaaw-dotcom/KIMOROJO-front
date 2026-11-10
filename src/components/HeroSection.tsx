@@ -31,12 +31,12 @@ export default function HeroSection() {
             isFarsi ? 'font-bold' : 'font-serif tracking-[0.15em] uppercase'
           }`}
         >
-          {isFarsi ? 'جواهرات دست‌ساز، برای هر لحظه' : 'Handcrafted For Every Moment'}
+          {isFarsi ? 'هر قطعه، راوی قصه ای ناگفته.' : 'Handcrafted For Every Moment'}
         </h1>
         
-        <p className="text-white/80 text-sm md:text-base mb-10 max-w-xl">
+        <p className="text-white/80 text-sm md:text-base mb-10 max-w-xl leading-relaxed">
           {isFarsi 
-            ? 'مجموعه‌ای بی‌نظیر از طلا و نقره دست‌ساز، یا ایده خود را به ما بسپارید.' 
+            ? 'تجربه‌ای زیسته و رویایی که به حقیقت پیوسته. طراحی اصیل، ساخت دقیق و جزئیاتی که از آنِ توست.' 
             : 'An exquisite collection of handcrafted gold and silver, or entrust us with your own idea.'}
         </p>
 
