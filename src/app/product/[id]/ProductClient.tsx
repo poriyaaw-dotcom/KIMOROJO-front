@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { useLang } from '@/context/LanguageContext';
 import { useFavorites } from '@/context/FavoritesContext';
 import Link from 'next/link';
-import { ArrowLeft, Heart, ZoomIn } from 'lucide-react';
+import { ArrowLeft, Heart, ZoomIn, X, Maximize2 } from 'lucide-react';
 import ProductCard from '@/components/ProductCard';
 import AddToCartButton from '@/components/AddToCartButton';
 import { calculateProductPrice, PricingSettings } from '@/utils/calculatePrice';
@@ -63,8 +63,12 @@ export default function ProductClient({
   const [scale, setScale] = useState(1);
   const [position, setPosition] = useState({ x: 50, y: 50 });
 
-  // Ref to attach native wheel event listener
-  const imageContainerRef = useRef<HTMLDivElement>(null);
+  // States for Full-Screen Modal & Touch Zoom
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalScale, setModalScale] = useState(1);
+  const [modalPos, setModalPos] = useState({ x: 0, y: 0 });
+  const [startDist, setStartDist] = useState(0);
+  const [startPos, setStartPos] = useState({ x: 0, y: 0 });
 
   const formatToman = (amount: number) => {
     const locale = isFarsi ? 'fa-IR' : 'en-US';
@@ -122,26 +126,13 @@ export default function ProductClient({
     applyTax
   };
 
-  // NATIVE WHEEL LISTENER: This is the magic fix to prevent page scroll
-  useEffect(() => {
-    const container = imageContainerRef.current;
-    if (!container) return;
-
-    const handleWheelNative = (e: WheelEvent) => {
-      e.preventDefault(); // Stops the page from scrolling
-      e.stopPropagation();
-      
-      const delta = e.deltaY > 0 ? -0.1 : 0.1;
-      setScale((prevScale) => Math.min(Math.max(prevScale + delta, 1), 3));
-    };
-
-    // { passive: false } is CRITICAL to allow e.preventDefault() on wheel events
-    container.addEventListener('wheel', handleWheelNative, { passive: false });
-
-    return () => {
-      container.removeEventListener('wheel', handleWheelNative);
-    };
-  }, []);
+  // Desktop Wheel Zoom Logic
+  const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.1 : 0.1;
+    const newScale = Math.min(Math.max(scale + delta, 1), 3);
+    setScale(newScale);
+  };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (scale > 1) {
@@ -155,6 +146,55 @@ export default function ProductClient({
   const handleMouseLeave = () => {
     setScale(1);
     setPosition({ x: 50, y: 50 });
+  };
+
+  // Mobile Touch Zoom & Pan Logic
+  const getDistance = (touches: React.TouchList) => {
+    return Math.hypot(
+      touches[0].clientX - touches[1].clientX,
+      touches[0].clientY - touches[1].clientY
+    );
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      setStartDist(getDistance(e.touches));
+    } else if (e.touches.length === 1) {
+      setStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const currentDist = getDistance(e.touches);
+      const scaleChange = currentDist / startDist;
+      setModalScale((prev) => Math.min(Math.max(prev * scaleChange, 1), 5));
+      setStartDist(currentDist);
+    } else if (e.touches.length === 1 && modalScale > 1) {
+      const dx = e.touches[0].clientX - startPos.x;
+      const dy = e.touches[0].clientY - startPos.y;
+      setModalPos((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+      setStartPos({ x: e.touches[0].clientX, y: e.touches[0].clientY });
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (modalScale <= 1.1) {
+      setModalScale(1);
+      setModalPos({ x: 0, y: 0 });
+    }
+  };
+
+  const openModal = () => {
+    setModalScale(1);
+    setModalPos({ x: 0, y: 0 });
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setModalScale(1);
+    setModalPos({ x: 0, y: 0 });
   };
 
   const lastUpdated = new Date();
@@ -171,12 +211,12 @@ export default function ProductClient({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-20">
         <div className="space-y-4">
-          {/* Added ref={imageContainerRef} and removed onWheel prop */}
           <div 
-            ref={imageContainerRef}
-            className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative cursor-zoom-in"
+            className="aspect-square bg-gray-100 rounded-sm overflow-hidden relative cursor-zoom-in group"
+            onWheel={handleWheel}
             onMouseMove={handleMouseMove}
             onMouseLeave={handleMouseLeave}
+            onClick={openModal}
           >
             <img 
               src={images[selectedImage]} 
@@ -184,6 +224,11 @@ export default function ProductClient({
               className="w-full h-full object-cover transition-transform duration-200 ease-out"
               style={{ transform: `scale(${scale})`, transformOrigin: `${position.x}% ${position.y}%` }}
             />
+            
+            <div className="absolute top-4 right-4 md:hidden bg-black/50 text-white p-2 rounded-full pointer-events-none backdrop-blur-sm">
+              <Maximize2 className="w-5 h-5" />
+            </div>
+
             {scale > 1 && (
               <div className="absolute top-4 right-4 bg-black/70 text-white text-xs px-2 py-1 rounded flex items-center gap-1 pointer-events-none">
                 <ZoomIn className="w-3 h-3" />
@@ -363,6 +408,62 @@ export default function ProductClient({
             })}
           </div>
         </section>
+      )}
+
+      {/* FULL-SCREEN IMAGE MODAL (Mobile & Desktop) */}
+      {isModalOpen && (
+        <div 
+          className="fixed inset-0 z-[100] bg-black/95 flex flex-col"
+          onClick={closeModal}
+        >
+          <div className="flex justify-between items-center p-4 text-white">
+            <span className="text-sm font-medium truncate pr-4">{productName}</span>
+            <button 
+              onClick={(e) => { e.stopPropagation(); closeModal(); }}
+              className="p-2 bg-white/10 rounded-full hover:bg-white/20 transition-colors flex-shrink-0"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          <div 
+            className="flex-1 flex items-center justify-center overflow-hidden touch-none"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          >
+            <img 
+              src={images[selectedImage]} 
+              alt={productName}
+              className="max-w-full max-h-full object-contain transition-transform duration-100 ease-out"
+              style={{ 
+                transform: `translate(${modalPos.x}px, ${modalPos.y}px) scale(${modalScale})` 
+              }}
+            />
+          </div>
+
+          {images.length > 1 && (
+            <div className="p-4 flex gap-3 overflow-x-auto justify-center bg-black/50">
+              {images.map((img, index) => (
+                <button 
+                  key={index}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedImage(index);
+                    setModalScale(1);
+                    setModalPos({ x: 0, y: 0 });
+                  }}
+                  className={`flex-shrink-0 w-16 h-16 rounded-sm overflow-hidden border-2 transition-all ${
+                    selectedImage === index ? 'border-white' : 'border-transparent opacity-60'
+                  }`}
+                >
+                  <img src={img} alt={`Thumbnail ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );
