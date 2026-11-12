@@ -7,7 +7,6 @@ export default function HeroSection() {
   const { lang } = useLang();
   const isFarsi = lang === 'fa';
 
-  // Local hero image from public folder
   const heroImage = "/images/hero-cover.png";
 
   return (
@@ -21,26 +20,27 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/25 transition-all duration-700" />
       </div>
 
-      {/* Hero Content */}
+      {/* CHANGED: items-center to items-start to align text to the edge */}
       <div 
-        className="absolute inset-0 flex flex-col items-center justify-center text-center px-6" 
+        className="absolute inset-0 flex flex-col items-start justify-center px-8 md:px-20 lg:px-32" 
         dir={isFarsi ? 'rtl' : 'ltr'}
       >
         <h1 
-          className={`text-white text-4xl md:text-6xl mb-4 ${
+          className={`text-white text-4xl md:text-6xl mb-4 max-w-4xl ${
             isFarsi ? 'font-bold' : 'font-serif tracking-[0.15em] uppercase'
           }`}
         >
           {isFarsi ? 'هر قطعه، راوی قصه ای ناگفته.' : 'Handcrafted For Every Moment'}
         </h1>
         
-        <p className="text-white/80 text-sm md:text-base mb-10 max-w-xl leading-relaxed">
+        {/* CHANGED: Added max-w-2xl to match the visual start of the big text */}
+        <p className="text-white/80 text-sm md:text-base mb-10 max-w-2xl leading-relaxed">
           {isFarsi 
             ? 'تجربه‌ای زیسته و رویایی که به حقیقت پیوسته. طراحی اصیل، ساخت دقیق و جزئیاتی که از آنِ توست.' 
             : 'An exquisite collection of handcrafted gold and silver, or entrust us with your own idea.'}
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center gap-4">
+        <div className="flex flex-col sm:flex-row items-start gap-4">
           <Link 
             href="/shop" 
             className={`bg-white text-gray-900 px-10 py-4 text-sm font-medium hover:bg-gray-100 transition-colors ${
