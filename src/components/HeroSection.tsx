@@ -20,13 +20,13 @@ export default function HeroSection() {
         <div className="absolute inset-0 bg-black/30 group-hover:bg-black/25 transition-all duration-700" />
       </div>
 
-      {/* CHANGED: items-center keeps the block in the middle of the screen */}
+      {/* Center the whole block */}
       <div 
         className="absolute inset-0 flex flex-col items-center justify-center px-6" 
         dir={isFarsi ? 'rtl' : 'ltr'}
       >
-        {/* CHANGED: This inner div centers the block but aligns text to the start (right for Farsi) */}
-        <div className="w-full max-w-4xl text-start">
+        {/* This inner div is centered, but text is aligned to the start (Right for Farsi) */}
+        <div className={`w-full max-w-4xl ${isFarsi ? 'text-right' : 'text-left'}`}>
           <h1 
             className={`text-white text-4xl md:text-6xl mb-4 ${
               isFarsi ? 'font-bold' : 'font-serif tracking-[0.15em] uppercase'
@@ -41,7 +41,8 @@ export default function HeroSection() {
               : 'An exquisite collection of handcrafted gold and silver, or entrust us with your own idea.'}
           </p>
 
-          <div className="flex flex-col sm:flex-row items-start gap-4">
+          {/* Buttons aligned to the start (Right for Farsi) */}
+          <div className={`flex flex-col sm:flex-row gap-4 ${isFarsi ? 'justify-end' : 'justify-start'}`}>
             <Link 
               href="/shop" 
               className={`bg-white text-gray-900 px-10 py-4 text-sm font-medium hover:bg-gray-100 transition-colors ${
