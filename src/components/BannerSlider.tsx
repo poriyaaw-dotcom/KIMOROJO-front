@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 
-// MOBILE: Only mobile-specific images
+// MOBILE: Mobile-specific images
 const mobileBanners = [
   { id: 1, type: 'image', src: "/images/slider-1-mobile.jpg" },
   { id: 2, type: 'image', src: "/images/slider-2-mobile.jpg" },
@@ -14,15 +14,11 @@ const mobileBanners = [
   { id: 6, type: 'image', src: "/images/slider-6-mobile.jpg" },
 ];
 
-// DESKTOP: Video FIRST (id: 100), then the regular pictures
+// DESKTOP: Video FIRST, then ONLY the pictures you have on the server (1 and 2)
 const desktopBanners = [
   { id: 100, type: 'video', src: "/images/slider-desktop.mp4" },
   { id: 1, type: 'image', src: "/images/slider-1.jpg" },
   { id: 2, type: 'image', src: "/images/slider-2.jpg" },
-  { id: 3, type: 'image', src: "/images/slider-3.jpg" },
-  { id: 4, type: 'image', src: "/images/slider-4.jpg" },
-  { id: 5, type: 'image', src: "/images/slider-5.jpg" },
-  { id: 6, type: 'image', src: "/images/slider-6.jpg" },
 ];
 
 export default function BannerSlider() {
@@ -46,7 +42,7 @@ export default function BannerSlider() {
   return (
     <section className="relative w-full h-screen sticky top-0 z-0 bg-black group">
       
-      {/* DESKTOP VIEW: Video + Pictures with Arrows */}
+      {/* DESKTOP VIEW */}
       <div className="hidden md:block relative w-full h-full">
         {desktopBanners.map((banner, index) => (
           <div
@@ -93,7 +89,7 @@ export default function BannerSlider() {
         </button>
       </div>
 
-      {/* MOBILE VIEW: Only Mobile Images with Arrows */}
+      {/* MOBILE VIEW */}
       <div className="block md:hidden relative w-full h-full">
         {mobileBanners.map((banner, index) => (
           <div
