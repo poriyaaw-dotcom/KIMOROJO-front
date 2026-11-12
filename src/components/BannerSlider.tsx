@@ -14,38 +14,18 @@ const mobileBanners = [
   { id: 6, type: 'image', src: "/images/slider-6-mobile.jpg" },
 ];
 
-// DESKTOP: Video FIRST, then the regular pictures
+// DESKTOP: Video FIRST (id: 100), then the regular pictures
 const desktopBanners = [
   { id: 100, type: 'video', src: "/images/slider-desktop.mp4" },
   { id: 1, type: 'image', src: "/images/slider-1.jpg" },
   { id: 2, type: 'image', src: "/images/slider-2.jpg" },
-  // You can add slider-3.jpg, slider-4.jpg etc here if you want them on desktop too
+  { id: 3, type: 'image', src: "/images/slider-3.jpg" },
+  { id: 4, type: 'image', src: "/images/slider-4.jpg" },
+  { id: 5, type: 'image', src: "/images/slider-5.jpg" },
+  { id: 6, type: 'image', src: "/images/slider-6.jpg" },
 ];
 
 export default function BannerSlider() {
-  const [current, setCurrent] = useState(0);
-
-  // We use the desktop array length for desktop, mobile array length for mobile
-  // But since we can't easily switch state logic on resize without complexity, 
-  // we'll just use a long timer for video and short for images, or a standard timer.
-  // Let's use a standard 6s timer. For video, it will just show the video for 6s then move on.
-  
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCurrent((prev) => {
-        // We determine max length based on a simple check, but to keep it simple:
-        // We will just cycle through the desktop array if on desktop, mobile if on mobile.
-        // Since we can't easily do that in state without resize listeners, 
-        // let's just make the array long enough or handle it in render.
-        return prev; // We'll handle rotation in a simpler way below
-      });
-    }, 6000); 
-    return () => clearInterval(timer);
-  }, []);
-
-  // Better approach: Just map the arrays directly and use CSS to show/hide
-  // We need separate state for desktop and mobile to rotate independently
-  
   const [desktopCurrent, setDesktopCurrent] = useState(0);
   const [mobileCurrent, setMobileCurrent] = useState(0);
 
@@ -57,10 +37,16 @@ export default function BannerSlider() {
     return () => clearInterval(timer);
   }, []);
 
+  const nextDesktop = () => setDesktopCurrent((prev) => (prev === desktopBanners.length - 1 ? 0 : prev + 1));
+  const prevDesktop = () => setDesktopCurrent((prev) => (prev === 0 ? desktopBanners.length - 1 : prev - 1));
+
+  const nextMobile = () => setMobileCurrent((prev) => (prev === mobileBanners.length - 1 ? 0 : prev + 1));
+  const prevMobile = () => setMobileCurrent((prev) => (prev === 0 ? mobileBanners.length - 1 : prev - 1));
+
   return (
     <section className="relative w-full h-screen sticky top-0 z-0 bg-black group">
       
-      {/* DESKTOP VIEW: Video + Pictures */}
+      {/* DESKTOP VIEW: Video + Pictures with Arrows */}
       <div className="hidden md:block relative w-full h-full">
         {desktopBanners.map((banner, index) => (
           <div
@@ -90,9 +76,24 @@ export default function BannerSlider() {
             </Link>
           </div>
         ))}
+        
+        {/* Desktop Arrows */}
+        <button 
+          onClick={prevDesktop}
+          className="absolute left-8 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors p-2 bg-black/20 rounded-full hover:bg-black/40"
+        >
+          <ChevronLeft className="w-10 h-10" />
+        </button>
+        
+        <button 
+          onClick={nextDesktop}
+          className="absolute right-8 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors p-2 bg-black/20 rounded-full hover:bg-black/40"
+        >
+          <ChevronRight className="w-10 h-10" />
+        </button>
       </div>
 
-      {/* MOBILE VIEW: Only Mobile Images */}
+      {/* MOBILE VIEW: Only Mobile Images with Arrows */}
       <div className="block md:hidden relative w-full h-full">
         {mobileBanners.map((banner, index) => (
           <div
@@ -111,15 +112,16 @@ export default function BannerSlider() {
           </div>
         ))}
         
+        {/* Mobile Arrows */}
         <button 
-          onClick={() => setMobileCurrent((prev) => (prev === mobileBanners.length - 1 ? 0 : prev + 1))}
+          onClick={prevMobile}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors p-2"
         >
           <ChevronLeft className="w-8 h-8" />
         </button>
         
         <button 
-          onClick={() => setMobileCurrent((prev) => (prev === 0 ? mobileBanners.length - 1 : prev - 1))}
+          onClick={nextMobile}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-20 text-white/70 hover:text-white transition-colors p-2"
         >
           <ChevronRight className="w-8 h-8" />
