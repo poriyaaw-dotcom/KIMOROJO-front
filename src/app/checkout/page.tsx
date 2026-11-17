@@ -53,15 +53,18 @@ export default function CheckoutPage() {
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
-  const [nationalId, setNationalId] = useState(''); // NEW: National ID
+  const [nationalId, setNationalId] = useState(''); 
   const [province, setProvince] = useState('');
   const [city, setCity] = useState('');
   const [address, setAddress] = useState('');
   const [postalCode, setPostalCode] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'online' | 'card'>('online'); // NEW: Payment method
+  const [paymentMethod, setPaymentMethod] = useState<'online' | 'card'>('online'); 
+  
+  // NEW: Tracking Code State
+  const [trackingCode, setTrackingCode] = useState('');
 
-  // NEW: Cascading Dropdown Data
+  // Cascading Dropdown Data
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [availableCities, setAvailableCities] = useState<{ name_fa: string; name_en: string }[]>([]);
 
@@ -89,7 +92,7 @@ export default function CheckoutPage() {
       .then(data => setSettings(data.data || data))
       .catch(err => console.error("Failed to fetch settings", err));
 
-    // Fetch Iran Cities (Task 4)
+    // Fetch Iran Cities
     fetch('/data/iran-cities.json')
       .then(res => res.json())
       .then(data => setProvinces(data))
@@ -190,9 +193,16 @@ export default function CheckoutPage() {
       return;
     }
 
-    // Validation for National ID (Task 3)
+    // Validation for National ID
     if (!nationalId || nationalId.length !== 10) {
       alert(t('nationalIdRequired'));
+      setIsProcessing(false);
+      return;
+    }
+
+    // NEW: Validation for Tracking Code (Card to Card)
+    if (paymentMethod === 'card' && !trackingCode.trim()) {
+      alert(t('trackingCodeRequired'));
       setIsProcessing(false);
       return;
     }
@@ -234,8 +244,9 @@ export default function CheckoutPage() {
       const orderPayload = {
         phone: userPhone,
         address_id: addressId,
-        national_id: nationalId, // NEW: Send National ID
-        payment_method: paymentMethod, // NEW: Send Payment Method
+        national_id: nationalId,
+        payment_method: paymentMethod,
+        tracking_code: trackingCode, // NEW: Send Tracking Code
         items: cartItems.map(item => ({
           product_id: parseInt(String(item.id), 10),
           quantity: item.quantity,
@@ -327,7 +338,7 @@ export default function CheckoutPage() {
                 </div>
               </div>
               
-              {/* National ID Field (Task 3) */}
+              {/* National ID Field */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">{t('nationalId')} *</label>
                 <input 
@@ -346,7 +357,7 @@ export default function CheckoutPage() {
                 <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} dir="ltr" className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-black transition-all" required />
               </div>
               
-              {/* Cascading Dropdowns (Task 4) */}
+              {/* Cascading Dropdowns */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('province')} *</label>
@@ -392,7 +403,7 @@ export default function CheckoutPage() {
                 <input type="text" value={postalCode} onChange={(e) => setPostalCode(e.target.value)} dir="ltr" className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-black transition-all" required />
               </div>
 
-              {/* Payment Method (Task 5 UI) */}
+              {/* Payment Method */}
               <div className="pt-4 border-t border-gray-200">
                 <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
                   <CreditCard className="w-5 h-5 text-[#682535]" />
@@ -409,20 +420,36 @@ export default function CheckoutPage() {
                   </label>
                 </div>
                 
-                {/* DYNAMIC CARD DETAILS DISPLAY */}
+                {/* Card to Card Details & Tracking Code Input */}
                 {paymentMethod === 'card' && (
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-sm text-sm text-gray-700 space-y-2">
-                    <p className="font-medium">{t('cardToCardNote')}</p>
-                    {settings.card_number ? (
-                      <div className="mt-3 space-y-1 text-xs dir-ltr text-left">
-                        <p><span className="font-semibold">{isFarsi ? 'نام بانک:' : 'Bank:'}</span> {isFarsi ? settings.card_bank_name_fa : settings.card_bank_name_en}</p>
-                        <p><span className="font-semibold">{isFarsi ? 'صاحب حساب:' : 'Owner:'}</span> {isFarsi ? settings.card_owner_name_fa : settings.card_owner_name_en}</p>
-                        <p><span className="font-semibold">{isFarsi ? 'شماره کارت:' : 'Card:'}</span> {settings.card_number}</p>
-                        <p><span className="font-semibold">{isFarsi ? 'شبا:' : 'Sheba:'}</span> {settings.card_sheba}</p>
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-xs text-red-500 italic">{isFarsi ? 'اطلاعات کارت توسط مدیریت تنظیم نشده است.' : 'Card details have not been configured by admin yet.'}</p>
-                    )}
+                  <div className="mt-4 space-y-4">
+                    <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-sm text-sm text-gray-700 space-y-2">
+                      <p className="font-medium">{t('cardToCardNote')}</p>
+                      {settings.card_number ? (
+                        <div className="mt-3 space-y-1 text-xs dir-ltr text-left">
+                          <p><span className="font-semibold">{isFarsi ? 'نام بانک:' : 'Bank:'}</span> {isFarsi ? settings.card_bank_name_fa : settings.card_bank_name_en}</p>
+                          <p><span className="font-semibold">{isFarsi ? 'صاحب حساب:' : 'Owner:'}</span> {isFarsi ? settings.card_owner_name_fa : settings.card_owner_name_en}</p>
+                          <p><span className="font-semibold">{isFarsi ? 'شماره کارت:' : 'Card:'}</span> {settings.card_number}</p>
+                          <p><span className="font-semibold">{isFarsi ? 'شبا:' : 'Sheba:'}</span> {settings.card_sheba}</p>
+                        </div>
+                      ) : (
+                        <p className="mt-2 text-xs text-red-500 italic">{isFarsi ? 'اطلاعات کارت توسط مدیریت تنظیم نشده است.' : 'Card details have not been configured by admin yet.'}</p>
+                      )}
+                    </div>
+                    
+                    {/* Tracking Code Input */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">{t('trackingCode')} *</label>
+                      <input 
+                        type="text" 
+                        value={trackingCode} 
+                        onChange={(e) => setTrackingCode(e.target.value)} 
+                        dir="ltr" 
+                        placeholder={t('enterTrackingCode')}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-sm focus:outline-none focus:ring-1 focus:ring-black transition-all" 
+                        required 
+                      />
+                    </div>
                   </div>
                 )}
               </div>

@@ -194,6 +194,11 @@ const translations = {
     cardToCardNote: "Transfer the exact total to the account below, then place your order. Upload your payment receipt if prompted.",
     copy: "Copy",
     copied: "Copied!",
+
+    // ===== TRACKING CODE KEYS =====
+    trackingCode: "Tracking Code",
+    enterTrackingCode: "Enter transaction tracking code",
+    trackingCodeRequired: "Please enter the tracking code for card-to-card payments.",
   },
   fa: {
     searchPlaceholder: "جستجوی جواهرات...",
@@ -361,6 +366,11 @@ const translations = {
     cardToCardNote: "مبلغ دقیق را به حساب زیر واریز کنید و سپس سفارش را ثبت نمایید. در صورت نیاز رسید پرداخت را بارگذاری کنید.",
     copy: "کپی",
     copied: "کپی شد!",
+
+    // ===== TRACKING CODE KEYS =====
+    trackingCode: "کد رهگیری",
+    enterTrackingCode: "کد رهگیری تراکنش را وارد کنید",
+    trackingCodeRequired: "لطفاً برای پرداخت کارت به کارت، کد رهگیری را وارد کنید.",
   }
 };
 
