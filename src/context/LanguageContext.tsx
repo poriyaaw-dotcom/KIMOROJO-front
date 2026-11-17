@@ -12,7 +12,6 @@ interface LangContextType {
 
 const LangContext = createContext<LangContextType | undefined>(undefined);
 
-// Helper functions to read/write cookies
 function getCookie(name: string) {
   if (typeof document === 'undefined') return null;
   const value = `; ${document.cookie}`;
@@ -34,7 +33,7 @@ const translations = {
     shop: "Shop",
     contact: "Contact Us",
     about: "About Us",
-    collections: "Collections", 
+    collections: "Collections",
     cart: "Cart",
     favorites: "Favorites",
     profile: "Profile",
@@ -154,13 +153,54 @@ const translations = {
     designedBy: "Designed and developed by",
     aresTeam: "Ares Team",
     enamad: "E-Namad Trust Symbol",
+
+    // ===== NEW KEYS (Tasks 2,3,4,5) =====
+    loading: "Loading...",
+    items: "items",
+    profileInformation: "Profile Information",
+    saveChanges: "Save Changes",
+    firstName: "First Name",
+    lastName: "Last Name",
+    phoneNumber: "Phone Number",
+    province: "Province",
+    fullAddress: "Full Address",
+    cancel: "Cancel",
+    save: "Save",
+    default: "Default",
+    setAsDefault: "Set as default address",
+    noAddresses: "No saved addresses found.",
+    savedAddresses: "Saved Addresses",
+    useNewAddress: "Use a new address",
+    orderType: "Type",
+    typeRegular: "Regular",
+    typeCustom: "Custom",
+    orderDate: "Date",
+    totalBudget: "Total/Budget",
+    noOrders: "You have not placed any orders yet.",
+    pending: "Pending",
+    cancelled: "Cancelled",
+    nationalId: "National ID",
+    nationalIdPlaceholder: "Enter your 10-digit National ID",
+    nationalIdRequired: "National ID is required for gold purchases.",
+    selectProvince: "Select province",
+    selectCity: "Select city",
+    paymentMethod: "Payment Method",
+    payOnline: "Pay Online (Gateway)",
+    payCardToCard: "Card to Card",
+    bankName: "Bank Name",
+    cardOwnerName: "Card Owner Name",
+    cardNumber: "Card Number",
+    shebaNumber: "IBAN / Sheba Number",
+    cardToCardNote: "Transfer the exact total to the account below, then place your order. Upload your payment receipt if prompted.",
+    copy: "Copy",
+    copied: "Copied!",
   },
   fa: {
     searchPlaceholder: "جستجوی جواهرات...",
     shop: "فروشگاه",
     contact: "تماس با ما",
     about: "درباره ما",
-    collections: "مجموعه‌ها", 
+    collections: "مجموعه‌ها",
     cart: "سبد خرید",
     favorites: "علاقه‌مندی‌ها",
     profile: "پروفایل",
@@ -280,14 +320,53 @@ const translations = {
     designedBy: "طراحی و توسعه توسط",
     aresTeam: "تیم آریس",
     enamad: "نماد اعتماد الکترونیکی",
+
+    // ===== NEW KEYS (Tasks 2,3,4,5) =====
+    loading: "در حال بارگذاری...",
+    items: "عدد",
+    profileInformation: "اطلاعات پروفایل",
+    saveChanges: "ذخیره تغییرات",
+    firstName: "نام",
+    lastName: "نام خانوادگی",
+    phoneNumber: "شماره تماس",
+    province: "استان",
+    fullAddress: "آدرس کامل",
+    cancel: "انصراف",
+    save: "ذخیره",
+    default: "پیش‌فرض",
+    setAsDefault: "تنظیم به عنوان آدرس پیش‌فرض",
+    noAddresses: "آدرس ذخیره‌شده‌ای یافت نشد.",
+    savedAddresses: "آدرس‌های ذخیره شده",
+    useNewAddress: "استفاده از آدرس جدید",
+    orderType: "نوع",
+    typeRegular: "عادی",
+    typeCustom: "اختصاصی",
+    orderDate: "تاریخ",
+    totalBudget: "مبلغ/بودجه",
+    noOrders: "شما هنوز سفارشی ثبت نکرده‌اید.",
+    pending: "در انتظار",
+    cancelled: "لغو شده",
+    nationalId: "کد ملی",
+    nationalIdPlaceholder: "کد ملی ۱۰ رقمی خود را وارد کنید",
+    nationalIdRequired: "برای خرید طلا وارد کردن کد ملی الزامی است.",
+    selectProvince: "انتخاب استان",
+    selectCity: "انتخاب شهر",
+    paymentMethod: "روش پرداخت",
+    payOnline: "پرداخت آنلاین (درگاه)",
+    payCardToCard: "کارت به کارت",
+    bankName: "نام بانک",
+    cardOwnerName: "نام صاحب کارت",
+    cardNumber: "شماره کارت",
+    shebaNumber: "شماره شبا",
+    cardToCardNote: "مبلغ دقیق را به حساب زیر واریز کنید و سپس سفارش را ثبت نمایید. در صورت نیاز رسید پرداخت را بارگذاری کنید.",
+    copy: "کپی",
+    copied: "کپی شد!",
   }
 };
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  // CHANGED: Default language is now 'fa' (Farsi)
   const [lang, setLangState] = useState<Lang>('fa');
 
-  // Load language from cookie on first render (respects user's choice if they switch)
   useEffect(() => {
     const savedLang = getCookie('lang') as Lang;
     if (savedLang === 'en' || savedLang === 'fa') {
@@ -297,7 +376,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 
   const setLang = (newLang: Lang) => {
     setLangState(newLang);
-    setCookie('lang', newLang, 365); // Save to cookie for 1 year
+    setCookie('lang', newLang, 365);
   };
 
   const t = (key: string) => {
